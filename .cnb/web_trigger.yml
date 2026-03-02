@@ -1,0 +1,5 @@
+branch:
+  - buttons:
+      - name: github
+        description: 同步到github
+        event: web_trigger_github

@@ -1,0 +1,24 @@
+{
+  "name": "repo-watcher",
+  "version": "1.0.0",
+  "description": "仓库更新监控 - Cloudflare Worker",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "keywords": [
+    "cloudflare-worker",
+    "github",
+    "cnb",
+    "monitor",
+    "notification"
+  ],
+  "author": "MagicCode",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

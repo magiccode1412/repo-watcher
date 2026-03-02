@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仓库监控</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'media'
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* 浅色模式（默认） */
+    body {
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+      min-height: 100vh;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .repo-card:hover {
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 深色模式 */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+      }
+
+      .glass-card {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .repo-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .repo-card {
+      transition: all 0.3s ease;
+    }
+
+    .repo-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .platform-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+
+<body class="text-slate-700 dark:text-slate-200">
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- 头部 -->
+    <header class="mb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">仓库监控仪表盘</h1>
+          <p class="text-slate-500 dark:text-slate-400">实时监控 GitHub、Gitee、GitLab 和 CNB 仓库状态</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <span id="lastUpdate" class="text-sm text-slate-400 dark:text-slate-500">加载中...</span>
+          <button onclick="loadData()"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+              </path>
+            </svg>
+            刷新
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 统计卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+      <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-1">总仓库数</p>
+            <p id="totalCount" class="text-3xl font-bold text-slate-900 dark:text-white">-</p>
+          </div>
+          <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+              </path>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-1">GitHub</p>
+            <p id="githubCount" class="text-3xl font-bold text-slate-900 dark:text-white">-</p>
+          </div>
+          <div class="w-12 h-12 bg-gray-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-black-400" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z">
+              </path>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-1">Gitee</p>
+            <p id="giteeCount" class="text-3xl font-bold text-slate-900 dark:text-white">-</p>
+          </div>
+          <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-400" viewBox="0 0 1024 1024">
+              <path d="M512 1024C229.222 1024 0 794.778 0 512S229.222 0 512 0s512 229.222 512 512-229.222 512-512 512z m259.149-568.883h-290.74a25.293 25.293 0 0 0-25.292 25.293l-0.026 63.206c0 13.952 11.315 25.293 25.267 25.293h177.024c13.978 0 25.293 11.315 25.293 25.267v12.646a75.853 75.853 0 0 1-75.853 75.853h-240.23a25.293 25.293 0 0 1-25.267-25.293V417.203a75.853 75.853 0 0 1 75.827-75.853h353.946a25.293 25.293 0 0 0 25.267-25.292l0.077-63.207a25.293 25.293 0 0 0-25.268-25.293H417.152a189.62 189.62 0 0 0-189.62 189.645V771.15c0 13.977 11.316 25.293 25.294 25.293h372.94a170.65 170.65 0 0 0 170.65-170.65V480.384a25.293 25.293 0 0 0-25.293-25.267z" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-1">GitLab</p>
+            <p id="gitlabCount" class="text-3xl font-bold text-slate-900 dark:text-white">-</p>
+          </div>
+          <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-1">CNB</p>
+            <p id="cnbCount" class="text-3xl font-bold text-slate-900 dark:text-white">-</p>
+          </div>
+          <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 16 16">
+              <path
+                d="M11.5286 1.87149C11.5769 1.73005 11.5356 1.5733 11.4233 1.47452C11.0472 1.14247 10.0965 0.443125 8.66911 0.339708C7.07054 0.223769 6.08089 0.652279 5.58096 0.969951C5.36531 1.10676 5.35326 1.41748 5.55499 1.57422L9.62723 4.73936C9.98617 5.01807 10.5125 4.8604 10.6591 4.43003L11.5286 1.87149Z" />
+              <path
+                d="M1.49017 11.2664C1.32368 11.3781 1.24855 11.584 1.30235 11.7774C1.45724 12.3339 1.91868 13.4919 3.22833 14.5456C4.53797 15.5992 6.08738 15.7128 6.74962 15.6966C6.94764 15.692 7.12016 15.5617 7.17998 15.3724L9.79046 7.11064C9.97875 6.51425 9.31048 6.01386 8.79154 6.3626L1.49017 11.2664Z" />
+              <path
+                d="M3.39813 2.54827C3.27013 2.49773 3.12683 2.50607 3.00579 2.57193C2.52256 2.83488 1.28526 3.64506 0.647135 5.30947C0.154627 6.59222 0.328071 8.01085 0.463488 8.70463C0.508009 8.9314 0.747306 9.06218 0.962489 8.97824L8.79485 5.92024C9.35414 5.70181 9.35646 4.91111 8.7981 4.6899L3.39813 2.54827Z" />
+              <path
+                d="M15.0167 8.46843C15.243 8.62194 15.5528 8.48652 15.5922 8.21569C15.6961 7.49872 15.7861 6.25076 15.371 5.30933C14.8177 4.05487 13.8786 3.28133 13.433 2.9669C13.292 2.86766 13.1019 2.87786 12.9725 2.99241L10.9959 4.74541C10.6732 5.03154 10.7066 5.54492 11.0636 5.78746L15.0167 8.46936V8.46843Z" />
+              <path
+                d="M9.49413 15.1604C9.47372 15.3937 9.67128 15.5866 9.90409 15.5616C10.6531 15.4813 12.1918 15.1841 13.3447 14.0827C14.467 13.0109 14.832 11.7384 14.9382 11.2319C14.9669 11.0951 14.9326 10.9528 14.8445 10.8442L11.3886 6.57909C11.0143 6.11719 10.2681 6.34535 10.2162 6.93757L9.49366 15.1604H9.49413Z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-1">状态</p>
+            <p class="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+              <span class="status-dot bg-emerald-600 dark:bg-emerald-400"></span>
+              运行中
+            </p>
+          </div>
+          <div class="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub 仓库 -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+          <path
+            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z">
+          </path>
+        </svg>
+        GitHub 仓库
+      </h2>
+      <div id="githubRepos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-6 text-center text-slate-400 dark:text-slate-500">加载中...</div>
+      </div>
+    </section>
+
+    <!-- Gitee 仓库 -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-red-500 dark:text-red-400" viewBox="0 0 1024 1024">
+          <path d="M512 1024C229.222 1024 0 794.778 0 512S229.222 0 512 0s512 229.222 512 512-229.222 512-512 512z m259.149-568.883h-290.74a25.293 25.293 0 0 0-25.292 25.293l-0.026 63.206c0 13.952 11.315 25.293 25.267 25.293h177.024c13.978 0 25.293 11.315 25.293 25.267v12.646a75.853 75.853 0 0 1-75.853 75.853h-240.23a25.293 25.293 0 0 1-25.267-25.293V417.203a75.853 75.853 0 0 1 75.827-75.853h353.946a25.293 25.293 0 0 0 25.267-25.292l0.077-63.207a25.293 25.293 0 0 0-25.268-25.293H417.152a189.62 189.62 0 0 0-189.62 189.645V771.15c0 13.977 11.316 25.293 25.294 25.293h372.94a170.65 170.65 0 0 0 170.65-170.65V480.384a25.293 25.293 0 0 0-25.293-25.267z" fill="currentColor"/>
+        </svg>
+        Gitee 仓库
+      </h2>
+      <div id="giteeRepos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-6 text-center text-slate-400 dark:text-slate-500">加载中...</div>
+      </div>
+    </section>
+
+    <!-- GitLab 仓库 -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-orange-500 dark:text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"/>
+        </svg>
+        GitLab 仓库
+      </h2>
+      <div id="gitlabRepos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-6 text-center text-slate-400 dark:text-slate-500">加载中...</div>
+      </div>
+    </section>
+
+    <!-- CNB 仓库 -->
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold text-orange-900 dark:text-white mb-4 flex items-center gap-2">
+        <svg class="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 16 16">
+          <path
+            d="M11.5286 1.87149C11.5769 1.73005 11.5356 1.5733 11.4233 1.47452C11.0472 1.14247 10.0965 0.443125 8.66911 0.339708C7.07054 0.223769 6.08089 0.652279 5.58096 0.969951C5.36531 1.10676 5.35326 1.41748 5.55499 1.57422L9.62723 4.73936C9.98617 5.01807 10.5125 4.8604 10.6591 4.43003L11.5286 1.87149Z" />
+          <path
+            d="M1.49017 11.2664C1.32368 11.3781 1.24855 11.584 1.30235 11.7774C1.45724 12.3339 1.91868 13.4919 3.22833 14.5456C4.53797 15.5992 6.08738 15.7128 6.74962 15.6966C6.94764 15.692 7.12016 15.5617 7.17998 15.3724L9.79046 7.11064C9.97875 6.51425 9.31048 6.01386 8.79154 6.3626L1.49017 11.2664Z" />
+          <path
+            d="M3.39813 2.54827C3.27013 2.49773 3.12683 2.50607 3.00579 2.57193C2.52256 2.83488 1.28526 3.64506 0.647135 5.30947C0.154627 6.59222 0.328071 8.01085 0.463488 8.70463C0.508009 8.9314 0.747306 9.06218 0.962489 8.97824L8.79485 5.92024C9.35414 5.70181 9.35646 4.91111 8.7981 4.6899L3.39813 2.54827Z" />
+          <path
+            d="M15.0167 8.46843C15.243 8.62194 15.5528 8.48652 15.5922 8.21569C15.6961 7.49872 15.7861 6.25076 15.371 5.30933C14.8177 4.05487 13.8786 3.28133 13.433 2.9669C13.292 2.86766 13.1019 2.87786 12.9725 2.99241L10.9959 4.74541C10.6732 5.03154 10.7066 5.54492 11.0636 5.78746L15.0167 8.46936V8.46843Z" />
+          <path
+            d="M9.49413 15.1604C9.47372 15.3937 9.67128 15.5866 9.90409 15.5616C10.6531 15.4813 12.1918 15.1841 13.3447 14.0827C14.467 13.0109 14.832 11.7384 14.9382 11.2319C14.9669 11.0951 14.9326 10.9528 14.8445 10.8442L11.3886 6.57909C11.0143 6.11719 10.2681 6.34535 10.2162 6.93757L9.49366 15.1604H9.49413Z" />
+        </svg>
+        CNB仓库
+      </h2>
+      <div id="cnbRepos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-6 text-center text-slate-400 dark:text-slate-500">加载中...</div>
+      </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer
+      class="text-center text-slate-400 dark:text-slate-600 text-sm border-t border-slate-200 dark:border-slate-800">
+      <p>仓库监控仪表盘 &copy; <span id="currentYear"></span></p>
+    </footer>
+  </div>
+
+  <script>
+    // 设置当前年份
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // ============================================
+    // 配置：修改为你的 Worker API 地址
+    // ============================================
+    const API_BASE_URL = ''; // 留空表示同源，或填写如 'https://your-worker.your-subdomain.workers.dev'
+
+    async function loadData() {
+      try {
+        const apiUrl = API_BASE_URL ? `${API_BASE_URL}/api/repos` : '/api/repos';
+        const response = await fetch(apiUrl);
+        const result = await response.json();
+
+        if (result.code !== 200) {
+          throw new Error(result.message);
+        }
+
+        const data = result.data;
+
+        // 更新统计
+        document.getElementById('totalCount').textContent = data.total;
+        document.getElementById('githubCount').textContent = data.github;
+        document.getElementById('giteeCount').textContent = data.gitee || 0;
+        document.getElementById('gitlabCount').textContent = data.gitlab || 0;
+        document.getElementById('cnbCount').textContent = data.cnb;
+        document.getElementById('lastUpdate').textContent = '最后更新: ' + new Date().toLocaleString('zh-CN');
+
+        // 渲染 GitHub 仓库
+        const githubRepos = data.repos.filter(r => r.platform === 'github')
+          .sort((a, b) => {
+            const dateA = a.latestDate ? new Date(a.latestDate).getTime() : 0;
+            const dateB = b.latestDate ? new Date(b.latestDate).getTime() : 0;
+            return dateB - dateA; // 倒序：最近更新的在前
+          });
+        document.getElementById('githubRepos').innerHTML = githubRepos.length > 0
+          ? githubRepos.map(repo => `
+            <div class="glass-card repo-card rounded-xl p-5 cursor-pointer" onclick="window.open('${repo.url}', '_blank')" title="点击打开仓库页面">
+              <div class="flex items-start justify-between mb-3">
+                <div>
+                  <span class="platform-badge bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400">GitHub</span>
+                  <h3 class="text-slate-900 dark:text-white font-semibold mt-2">${repo.name}</h3>
+                  <p class="text-slate-500 dark:text-slate-400 text-sm">${repo.branch}</p>
+                </div>
+                <div class="status-dot ${repo.latestSha ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-amber-500 dark:bg-amber-400'}"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-slate-500 dark:text-slate-500">最新 SHA:</span>
+                  <code class="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded text-xs">${repo.latestSha ? repo.latestSha.substring(0, 8) : '未检测'}</code>
+                </div>
+                ${repo.latestDate ? `<div class="flex items-center gap-2 text-sm">
+                  <span class="text-slate-500 dark:text-slate-500">更新时间:</span>
+                  <span class="text-slate-600 dark:text-slate-300">${formatRelativeTime(repo.latestDate)}</span>
+                </div>` : ''}
+              </div>
+            </div>
+          `).join('')
+          : '<div class="glass-card rounded-xl p-6 text-center text-slate-400 dark:text-slate-500 col-span-full">暂无 GitHub 仓库配置</div>';
+
+        // 渲染 Gitee 仓库
+        const giteeRepos = data.repos.filter(r => r.platform === 'gitee')
+          .sort((a, b) => {
+            const dateA = a.latestDate ? new Date(a.latestDate).getTime() : 0;
+            const dateB = b.latestDate ? new Date(b.latestDate).getTime() : 0;
+            return dateB - dateA; // 倒序：最近更新的在前
+          });
+        document.getElementById('giteeRepos').innerHTML = giteeRepos.length > 0
+          ? giteeRepos.map(repo => `
+            <div class="glass-card repo-card rounded-xl p-5 cursor-pointer" onclick="window.open('${repo.url}', '_blank')" title="点击打开仓库页面">
+              <div class="flex items-start justify-between mb-3">
+                <div>
+                  <span class="platform-badge bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400">Gitee</span>
+                  <h3 class="text-slate-900 dark:text-white font-semibold mt-2">${repo.name}</h3>
+                  <p class="text-slate-500 dark:text-slate-400 text-sm">${repo.branch}</p>
+                </div>
+                <div class="status-dot ${repo.latestSha ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-amber-500 dark:bg-amber-400'}"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-slate-500 dark:text-slate-500">最新 SHA:</span>
+                  <code class="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded text-xs">${repo.latestSha ? repo.latestSha.substring(0, 8) : '未检测'}</code>
+                </div>
+                ${repo.latestDate ? `<div class="flex items-center gap-2 text-sm">
+                  <span class="text-slate-500 dark:text-slate-500">更新时间:</span>
+                  <span class="text-slate-600 dark:text-slate-300">${formatRelativeTime(repo.latestDate)}</span>
+                </div>` : ''}
+              </div>
+            </div>
+          `).join('')
+          : '<div class="glass-card rounded-xl p-6 text-center text-slate-400 dark:text-slate-500 col-span-full">暂无 Gitee 仓库配置</div>';
+
+        // 渲染 GitLab 仓库
+        const gitlabRepos = data.repos.filter(r => r.platform === 'gitlab')
+          .sort((a, b) => {
+            const dateA = a.latestDate ? new Date(a.latestDate).getTime() : 0;
+            const dateB = b.latestDate ? new Date(b.latestDate).getTime() : 0;
+            return dateB - dateA; // 倒序：最近更新的在前
+          });
+        document.getElementById('gitlabRepos').innerHTML = gitlabRepos.length > 0
+          ? gitlabRepos.map(repo => `
+            <div class="glass-card repo-card rounded-xl p-5 cursor-pointer" onclick="window.open('${repo.url}', '_blank')" title="点击打开仓库页面">
+              <div class="flex items-start justify-between mb-3">
+                <div>
+                  <span class="platform-badge bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">GitLab</span>
+                  <h3 class="text-slate-900 dark:text-white font-semibold mt-2">${repo.name}</h3>
+                  <p class="text-slate-500 dark:text-slate-400 text-sm">${repo.branch}</p>
+                </div>
+                <div class="status-dot ${repo.latestSha ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-amber-500 dark:bg-amber-400'}"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-slate-500 dark:text-slate-500">最新 SHA:</span>
+                  <code class="text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 px-2 py-0.5 rounded text-xs">${repo.latestSha ? repo.latestSha.substring(0, 8) : '未检测'}</code>
+                </div>
+                ${repo.latestDate ? `<div class="flex items-center gap-2 text-sm">
+                  <span class="text-slate-500 dark:text-slate-500">更新时间:</span>
+                  <span class="text-slate-600 dark:text-slate-300">${formatRelativeTime(repo.latestDate)}</span>
+                </div>` : ''}
+              </div>
+            </div>
+          `).join('')
+          : '<div class="glass-card rounded-xl p-6 text-center text-slate-400 dark:text-slate-500 col-span-full">暂无 GitLab 仓库配置</div>';
+
+        // 渲染 CNB 仓库
+        const cnbRepos = data.repos.filter(r => r.platform === 'cnb')
+          .sort((a, b) => {
+            const dateA = a.latestDate ? new Date(a.latestDate).getTime() : 0;
+            const dateB = b.latestDate ? new Date(b.latestDate).getTime() : 0;
+            return dateB - dateA; // 倒序：最近更新的在前
+          });
+        document.getElementById('cnbRepos').innerHTML = cnbRepos.length > 0
+          ? cnbRepos.map(repo => `
+            <div class="glass-card repo-card rounded-xl p-5 cursor-pointer" onclick="window.open('${repo.url}', '_blank')" title="点击打开仓库页面">
+              <div class="flex items-start justify-between mb-3">
+                <div>
+                  <span class="platform-badge bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">CNB</span>
+                  <h3 class="text-slate-900 dark:text-white font-semibold mt-2">${repo.name}</h3>
+                </div>
+                <div class="status-dot ${repo.latestBuildId ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-amber-500 dark:bg-amber-400'}"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-slate-500 dark:text-slate-500">最新构建:</span>
+                  <code class="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded text-xs">${repo.latestBuildId || '未检测'}</code>
+                </div>
+                ${repo.latestDate ? `<div class="flex items-center gap-2 text-sm">
+                  <span class="text-slate-500 dark:text-slate-500">构建时间:</span>
+                  <span class="text-slate-600 dark:text-slate-300">${formatRelativeTime(repo.latestDate)}</span>
+                </div>` : ''}
+              </div>
+            </div>
+          `).join('')
+          : '<div class="glass-card rounded-xl p-6 text-center text-slate-400 dark:text-slate-500 col-span-full">暂无 CNB 仓库配置</div>';
+
+      } catch (error) {
+        console.error('加载数据失败:', error);
+        document.getElementById('githubRepos').innerHTML =
+          '<div class="glass-card rounded-xl p-6 text-center text-red-500 dark:text-red-400 col-span-full">加载失败: ' + error.message + '</div>';
+        document.getElementById('giteeRepos').innerHTML =
+          '<div class="glass-card rounded-xl p-6 text-center text-red-500 dark:text-red-400 col-span-full">加载失败: ' + error.message + '</div>';
+        document.getElementById('gitlabRepos').innerHTML =
+          '<div class="glass-card rounded-xl p-6 text-center text-red-500 dark:text-red-400 col-span-full">加载失败: ' + error.message + '</div>';
+        document.getElementById('cnbRepos').innerHTML =
+          '<div class="glass-card rounded-xl p-6 text-center text-red-500 dark:text-red-400 col-span-full">加载失败: ' + error.message + '</div>';
+      }
+    }
+
+    // 格式化相对时间（如：3天前、刚刚）
+    function formatRelativeTime(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSeconds = Math.floor(diffMs / 1000);
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffSeconds < 60) {
+        return '刚刚';
+      } else if (diffMinutes < 60) {
+        return `${diffMinutes} 分钟前`;
+      } else if (diffHours < 24) {
+        return `${diffHours} 小时前`;
+      } else if (diffDays < 30) {
+        return `${diffDays} 天前`;
+      } else if (diffDays < 365) {
+        const diffMonths = Math.floor(diffDays / 30);
+        return `${diffMonths} 个月前`;
+      } else {
+        const diffYears = Math.floor(diffDays / 365);
+        return `${diffYears} 年前`;
+      }
+    }
+
+    // 页面加载时自动获取数据
+    loadData();
+
+    // 每 30 秒自动刷新
+    setInterval(loadData, 30000);
+  </script>
+</body>
+
+</html>
