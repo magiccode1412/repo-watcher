@@ -92,10 +92,6 @@
 | `MAGICPUSH_URL` | 否 | MagicPush API URL（启用 MagicPush 通知时必填） | `https://your-magicpush-api.com/notify` |
 | `MAGICPUSH_TOKEN` | 否 | MagicPush Bearer Token（启用 MagicPush 通知时必填） | `your-magicpush-token` |
 
-### KV 命名空间绑定
-
-创建 KV 命名空间并绑定为变量名 `KV_DEFAULT`：
-
 ## 使用方式
 
 ### 方式一：可视化仪表盘（推荐）
@@ -166,7 +162,6 @@ fetch('https://your-worker.your-subdomain.workers.dev/api/repos')
 **注意**：手动触发需要设置环境变量 `DEV_MODE=true`，否则会返回"开发模式已关闭"。
 
 **请求说明**：
-- `/favicon.ico` 被屏蔽，返回 204（防止浏览器默认请求）
 - 使用 `/check` 路径进行检测
 - 使用 `/test-notify` 路径测试通知
 
@@ -296,7 +291,7 @@ GET /test-notify?target=magicpush
 ```
 HTTP 状态码：403
 
-### 方式二：定时触发（Cron Triggers）
+### 方式四：定时触发（Cron Triggers）
 
 在 Cloudflare Dashboard 中配置 Cron Triggers：
 
@@ -567,6 +562,8 @@ repo-watcher/
 │   ├── services/          # 服务层
 │   │   ├── index.js       # 服务导出
 │   │   ├── github.js      # GitHub API 服务
+│   │   ├── gitee.js       # Gitee API 服务
+│   │   ├── gitlab.js      # GitLab API 服务
 │   │   ├── cnb.js         # CNB API 服务
 │   │   └── notify.js      # 通知服务
 │   └── utils/             # 工具函数
@@ -575,7 +572,8 @@ repo-watcher/
 │       ├── kv.js          # KV 操作工具
 │       └── datetime.js    # 日期时间工具
 ├── static/
-│   └── dashboard.html     # 仪表盘页面
+│   ├── dashboard.html     # 仪表盘页面
+│   └── favicon.svg        # 网站图标
 ├── wrangler.toml          # Wrangler 配置文件
 ├── package.json           # 项目配置
 └── README.md              # 项目文档
