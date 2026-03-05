@@ -285,7 +285,7 @@ export async function sendMagicPushNotification(result, env) {
       body: JSON.stringify({
         title: title,
         content: content,
-        type: 'text'
+        type: env.MAGICPUSH_TYPE || 'text'
       })
     });
 

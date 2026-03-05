@@ -26,7 +26,7 @@
 
 在`构建命令`处填写：`npm install --save-dev wrangler@4`,这是必须的，否则会报错，因为构建默认使用的是wrangler@3，不支持自动创建kv命名空间
 
-点此👉👉 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/magiccode1412/repo-watcher) 👈👈
+点此👉👉 [![Deploy to Cloudflare Workers](static/readme/cloudflare.svg)](https://deploy.workers.cloudflare.com/?url=https://github.com/magiccode1412/repo-watcher) 👈👈
 
 ### 环境变量配置
 
@@ -91,6 +91,7 @@
 | `PUSHPLUS_CHANNEL` | 否 | 发送渠道：wechat/mp/mail/sms，默认 wechat | `wechat` |
 | `MAGICPUSH_URL` | 否 | MagicPush API URL（启用 MagicPush 通知时必填） | `https://your-magicpush-api.com/notify` |
 | `MAGICPUSH_TOKEN` | 否 | MagicPush Bearer Token（启用 MagicPush 通知时必填） | `your-magicpush-token` |
+| `MAGICPUSH_TYPE` | 否 | MagicPush 通知类型 | `text` |
 
 ## 使用方式
 
