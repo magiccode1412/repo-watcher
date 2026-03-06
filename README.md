@@ -2,6 +2,13 @@
 
 一个基于 Cloudflare Worker 的多平台仓库更新监控工具，支持 GitHub、Gitee、GitLab 和 CNB 仓库的代码提交监控、定时检测和通知功能。
 
+## 预览
+
+[点此预览](https://repo-watcher.nxsg.workers.dev/)
+
+![light](/static/readme/light.webp)
+![dark](/static/readme/dark.webp)
+
 ## 功能特性
 
 - **多平台支持**：支持同时监控 GitHub、Gitee、GitLab 和 CNB 仓库的代码提交
