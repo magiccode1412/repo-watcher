@@ -21,32 +21,32 @@ export async function sendMagicPushNotification(result, env) {
       };
       const emoji = statusEmoji[result.latestStatus] || '❓';
 
-      title = `🚀 CNB 构建更新 - ${result.repo}`;
-      content = `📦 仓库：${result.repo}\n` +
-                `🆕 新构建 ID：${result.latestBuildId}\n` +
-                `${emoji} 构建状态：${result.latestStatus}\n` +
-                `📅 构建时间：${formattedTime}`;
+      title = `CNB 构建更新 - ${result.repo}`;
+      content = `- **仓库**：[${result.repo}](${result.url})\n` +
+                `- **构建 ID**：\`${result.latestBuildId}\`\n` +
+                `- **状态**：${emoji} ${result.latestStatus}\n` +
+                `- **时间**：${formattedTime}`;
       if (result.buildUrl) {
-        content += `\n🔗 查看构建详情: ${result.buildUrl}`;
+        content += `\n- [查看构建详情](${result.buildUrl})`;
       }
     } else if (result.platform === 'gitee') {
-      title = `🚀 Gitee 仓库更新 - ${result.repo}`;
-      content = `📦 仓库：${result.repo}\n` +
-                `🆔 最新 SHA：${result.latestSha}\n` +
-                `💬 Commit：${result.commitMessage || '无'}\n` +
-                `📅 更新时间：${formattedTime}`;
+      title = `Gitee 仓库更新 - ${result.repo}`;
+      content = `- **仓库**：[${result.repo}](${result.url})\n` +
+                `- **SHA**：\`${result.latestSha}\`\n` +
+                `- **Commit**：${result.commitMessage || '无'}\n` +
+                `- **时间**：${formattedTime}`;
     } else if (result.platform === 'gitlab') {
-      title = `🚀 GitLab 仓库更新 - ${result.repo}`;
-      content = `📦 仓库：${result.repo}\n` +
-                `🆔 最新 SHA：${result.latestSha}\n` +
-                `💬 Commit：${result.commitMessage || '无'}\n` +
-                `📅 更新时间：${formattedTime}`;
+      title = `GitLab 仓库更新 - ${result.repo}`;
+      content = `- **仓库**：[${result.repo}](${result.url})\n` +
+                `- **SHA**：\`${result.latestSha}\`\n` +
+                `- **Commit**：${result.commitMessage || '无'}\n` +
+                `- **时间**：${formattedTime}`;
     } else {
-      title = `🚀 GitHub 仓库更新 - ${result.repo}`;
-      content = `📦 仓库：${result.repo}\n` +
-                `🆔 最新 SHA：${result.latestSha}\n` +
-                `💬 Commit：${result.commitMessage || '无'}\n` +
-                `📅 更新时间：${formattedTime}`;
+      title = `GitHub 仓库更新 - ${result.repo}`;
+      content = `- **仓库**：[${result.repo}](${result.url})\n` +
+                `- **SHA**：\`${result.latestSha}\`\n` +
+                `- **Commit**：${result.commitMessage || '无'}\n` +
+                `- **时间**：${formattedTime}`;
     }
 
     const response = await fetch(env.MAGICPUSH_URL, {
@@ -58,7 +58,7 @@ export async function sendMagicPushNotification(result, env) {
       body: JSON.stringify({
         title: title,
         content: content,
-        type: env.MAGICPUSH_TYPE || 'text'
+        type: 'markdown'
       })
     });
 

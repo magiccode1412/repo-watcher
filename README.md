@@ -92,7 +92,6 @@
 |--------|------|------|------|
 | `MAGICPUSH_URL` | 否 | MagicPush API URL（启用 MagicPush 通知时必填） | `https://your-magicpush-api.com/notify` |
 | `MAGICPUSH_TOKEN` | 否 | MagicPush Bearer Token（启用 MagicPush 通知时必填） | `your-magicpush-token` |
-| `MAGICPUSH_TYPE` | 否 | MagicPush 通知类型 | `text` |
 
 ## 使用方式
 
@@ -341,25 +340,29 @@ HTTP 状态码：403
 - `MAGICPUSH_URL`：MagicPush API URL
 - `MAGICPUSH_TOKEN`：MagicPush Bearer Token
 
-**通知格式：**
+> 通知消息以 Markdown 格式发送，type 固定为 `markdown`。
 
-**GitHub 仓库更新：**
+**通知格式（GitHub 仓库更新）：**
+
+```markdown
+## GitHub 仓库更新 - owner/repo@branch
+
+- **仓库**：[owner/repo](https://github.com/owner/repo)
+- **SHA**：`abc123...`
+- **Commit**: fix bug
+- **时间**：2026-02-08 12:58:15
 ```
-🚀 GitHub 仓库更新 - owner/repo@branch
 
-📦 仓库：owner/repo@branch
-🆔 最新 SHA：abc123...
-📅 更新时间：2026-02-08 12:58:15
-```
+**通知格式（CNB 构建更新）：**
 
-**CNB 构建更新：**
-```
-🚀 CNB 构建更新 - owner/repo@main
+```markdown
+## CNB 构建更新 - owner/repo@main
 
-📦 仓库：owner/repo@main
-🆕 新构建 ID：abc123...
-✅ 构建状态：success
-📅 构建时间：2026-02-09 15:30:00
+- **仓库**：[owner/repo](https://cnb.cool/owner/repo)
+- **构建 ID**：`abc123...`
+- **状态**：✅ success
+- **时间**：2026-02-09 15:30:00
+- [查看构建详情](https://cnb.cool/build/xxx)
 ```
 
 
