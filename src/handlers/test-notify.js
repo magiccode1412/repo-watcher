@@ -1,4 +1,4 @@
-import { sendTelegramNotification, sendWeComNotification, sendPushPlusNotification, sendMagicPushNotification } from '../services/notify.js';
+import { sendMagicPushNotification } from '../services/notify.js';
 
 /**
  * 处理通知测试请求
@@ -7,7 +7,6 @@ import { sendTelegramNotification, sendWeComNotification, sendPushPlusNotificati
  * @returns {Promise<Response>}
  */
 export async function handleTestNotify(url, env) {
-  const target = url.searchParams.get('target');
   const mockResult = {
     repo: 'test/repo@main',
     hasUpdate: true,
@@ -19,40 +18,12 @@ export async function handleTestNotify(url, env) {
 
   const results = [];
 
-  if (!target || target === 'all' || target === 'telegram') {
-    if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
-      await sendTelegramNotification(mockResult, env);
-      results.push({ channel: 'telegram', status: 'success' });
-    } else {
-      results.push({ channel: 'telegram', status: 'skipped', reason: '未配置 TELEGRAM_BOT_TOKEN 或 TELEGRAM_CHAT_ID' });
-    }
-  }
-
-  if (!target || target === 'all' || target === 'wecom') {
-    if (env.WECOM_WEBHOOK_URL) {
-      await sendWeComNotification(mockResult, env);
-      results.push({ channel: 'wecom', status: 'success' });
-    } else {
-      results.push({ channel: 'wecom', status: 'skipped', reason: '未配置 WECOM_WEBHOOK_URL' });
-    }
-  }
-
-  if (!target || target === 'all' || target === 'pushplus') {
-    if (env.PUSHPLUS_TOKEN) {
-      await sendPushPlusNotification(mockResult, env);
-      results.push({ channel: 'pushplus', status: 'success' });
-    } else {
-      results.push({ channel: 'pushplus', status: 'skipped', reason: '未配置 PUSHPLUS_TOKEN' });
-    }
-  }
-
-  if (!target || target === 'all' || target === 'magicpush') {
-    if (env.MAGICPUSH_TOKEN && env.MAGICPUSH_URL) {
-      await sendMagicPushNotification(mockResult, env);
-      results.push({ channel: 'magicpush', status: 'success' });
-    } else {
-      results.push({ channel: 'magicpush', status: 'skipped', reason: '未配置 MAGICPUSH_TOKEN 或 MAGICPUSH_URL' });
-    }
+  // MagicPush 测试
+  if (env.MAGICPUSH_TOKEN && env.MAGICPUSH_URL) {
+    await sendMagicPushNotification(mockResult, env);
+    results.push({ channel: 'magicpush', status: 'success' });
+  } else {
+    results.push({ channel: 'magicpush', status: 'skipped', reason: '未配置 MAGICPUSH_TOKEN 或 MAGICPUSH_URL' });
   }
 
   return new Response(JSON.stringify({

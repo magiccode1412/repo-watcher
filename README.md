@@ -23,7 +23,7 @@
   - 支持 Gitee Token 认证
   - 支持 GitLab Token 认证（支持 gitlab.com 和自托管 GitLab）
   - 支持 CNB Token 认证
-- **通知接口**：支持 Telegram、企业微信、PushPlus 和 MagicPush 通知
+- **通知接口**：支持 MagicPush 通知
 - **限流监控**：实时获取 GitHub API 限流状态
 - **可视化仪表盘**：内置 Web 仪表盘，直观展示所有监控仓库状态
 
@@ -90,12 +90,6 @@
 
 | 变量名 | 必填 | 说明 | 示例 |
 |--------|------|------|------|
-| `TELEGRAM_BOT_TOKEN` | 否 | Telegram Bot Token（启用 Telegram 通知时必填） | `123456:ABC-DEF...` |
-| `TELEGRAM_CHAT_ID` | 否 | Telegram 接收消息的 Chat ID（启用 Telegram 通知时必填） | `123456789` |
-| `WECOM_WEBHOOK_URL` | 否 | 企业微信机器人 Webhook URL（启用企业微信通知时必填） | `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx` |
-| `PUSHPLUS_TOKEN` | 否 | PushPlus Token（启用 PushPlus 通知时必填） | `your-pushplus-token` |
-| `PUSHPLUS_TOPIC` | 否 | PushPlus 群组编码，不填则发给自己 | `your-topic-code` |
-| `PUSHPLUS_CHANNEL` | 否 | 发送渠道：wechat/mp/mail/sms，默认 wechat | `wechat` |
 | `MAGICPUSH_URL` | 否 | MagicPush API URL（启用 MagicPush 通知时必填） | `https://your-magicpush-api.com/notify` |
 | `MAGICPUSH_TOKEN` | 否 | MagicPush Bearer Token（启用 MagicPush 通知时必填） | `your-magicpush-token` |
 | `MAGICPUSH_TYPE` | 否 | MagicPush 通知类型 | `text` |
@@ -223,23 +217,11 @@ GET /check?type=cnb&notify=true
 
 #### 5. 测试通知渠道
 
-测试通知配置是否正常工作：
+测试 MagicPush 通知配置是否正常工作：
 
 ```
-# 测试所有通知渠道
-GET /test-notify
-
-# 测试 Telegram 通知
-GET /test-notify?target=telegram
-
-# 测试企业微信通知
-GET /test-notify?target=wecom
-
-# 测试 PushPlus 通知
-GET /test-notify?target=pushplus
-
 # 测试 MagicPush 通知
-GET /test-notify?target=magicpush
+GET /test-notify
 ```
 
 **响应示例（通知测试）：**
@@ -248,18 +230,6 @@ GET /test-notify?target=magicpush
   "code": 200,
   "message": "通知测试完成",
   "data": [
-    {
-      "channel": "telegram",
-      "status": "success"
-    },
-    {
-      "channel": "wecom",
-      "status": "success"
-    },
-    {
-      "channel": "pushplus",
-      "status": "success"
-    },
     {
       "channel": "magicpush",
       "status": "success"
@@ -363,109 +333,7 @@ HTTP 状态码：403
 
 ## 通知功能
 
-本工具已内置支持多种通知渠道，根据环境变量自动判断启用哪些通知渠道。
-
-### Telegram 通知
-
-**配置环境变量：**
-- `TELEGRAM_BOT_TOKEN`：Telegram Bot Token
-- `TELEGRAM_CHAT_ID`：接收消息的 Chat ID
-
-**获取 Bot Token：**
-1. 在 Telegram 中找到 [@BotFather](https://t.me/botfather)
-2. 发送 `/newbot` 创建新机器人
-3. 按提示设置机器人名称，获取 Token
-
-**获取 Chat ID：**
-1. 在 Telegram 中找到 [@userinfobot](https://t.me/userinfobot)
-2. 发送任意消息，获取你的 Chat ID
-3. 或者直接给你的 Bot 发送消息，然后访问 `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates` 查看
-
-**通知格式：**
-
-**GitHub 仓库更新：**
-```
-🚀 GitHub 仓库更新通知
-
-📦 仓库：owner/repo@branch
-🆔 最新 SHA：abc123...
-📅 更新时间：2026-02-08 12:58:15
-```
-
-**CNB 代码提交更新：**
-```
-🚀 CNB 代码提交更新通知
-
-📦 仓库：owner/repo@main
-🆔 最新 SHA：abc123...
-👤 提交者：John Doe
-📝 提交信息：Update README
-📅 提交时间：2026-02-09 15:30:00
-```
-
-### 企业微信机器人通知
-
-**配置环境变量：**
-- `WECOM_WEBHOOK_URL`：企业微信群机器人的 Webhook URL
-
-**获取 Webhook URL：**
-1. 在企业微信群中点击群设置
-2. 选择"群机器人" → "添加机器人"
-3. 设置机器人名称，获取 Webhook URL
-
-**通知格式：**
-
-**GitHub 仓库更新：**
-```
-🚀 GitHub 仓库更新通知
-📦 仓库：owner/repo@branch
-🆔 最新 SHA：abc123...
-📅 更新时间：2026-02-08 12:58:15
-```
-
-**CNB 代码提交更新：**
-```
-🚀 CNB 代码提交更新通知
-📦 仓库：owner/repo@main
-🆔 最新 SHA：abc123...
-👤 提交者：John Doe
-📝 提交信息：Update README
-📅 提交时间：2026-02-09 15:30:00
-```
-
-### PushPlus 通知
-
-**配置环境变量：**
-- `PUSHPLUS_TOKEN`：PushPlus Token（必填）
-- `PUSHPLUS_TOPIC`：群组编码，不填则发给自己（可选）
-- `PUSHPLUS_CHANNEL`：发送渠道（wechat/mp/mail/sms），默认 wechat（可选）
-
-**获取 PushPlus Token：**
-1. 访问 [PushPlus 官网](https://www.pushplus.plus)
-2. 扫码登录后，在"一对一"页面获取 Token
-3. 如需发送给群组，在"一对多"页面创建群组并获取 Topic 编码
-
-**通知格式：**
-
-**GitHub 仓库更新：**
-```
-🚀 GitHub 仓库更新通知 - owner/repo@branch
-
-📦 仓库：owner/repo@branch
-🆔 最新 SHA：abc123...
-📅 更新时间：2026-02-08 12:58:15
-```
-
-**CNB 代码提交更新：**
-```
-🚀 CNB 代码提交更新通知 - owner/repo@main
-
-📦 仓库：owner/repo@main
-🆔 最新 SHA：abc123...
-👤 提交者：John Doe
-📝 提交信息：Update README
-📅 提交时间：2026-02-09 15:30:00
-```
+本工具使用 MagicPush 作为通知渠道，检测到仓库更新时自动发送通知。
 
 ### MagicPush 通知
 
@@ -484,47 +352,17 @@ HTTP 状态码：403
 📅 更新时间：2026-02-08 12:58:15
 ```
 
-**CNB 代码提交更新：**
+**CNB 构建更新：**
 ```
-🚀 CNB 代码提交更新 - owner/repo@main
+🚀 CNB 构建更新 - owner/repo@main
 
 📦 仓库：owner/repo@main
-🆔 最新 SHA：abc123...
-👤 提交者：John Doe
-📝 提交信息：Update README
-📅 提交时间：2026-02-09 15:30:00
+🆕 新构建 ID：abc123...
+✅ 构建状态：success
+📅 构建时间：2026-02-09 15:30:00
 ```
 
-### 多通知渠道同时使用
 
-您可以同时配置多个通知渠道，系统会自动检测并启用所有已配置的渠道。例如：
-
-**同时启用 Telegram 和企业微信：**
-```
-TELEGRAM_BOT_TOKEN = 123456:ABC-DEF...
-TELEGRAM_CHAT_ID = 123456789
-WECOM_WEBHOOK_URL = https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx
-```
-
-当检测到仓库更新时，Telegram 和企业微信都会收到通知。
-
-**同时启用所有通知渠道（Telegram + 企业微信 + PushPlus + MagicPush）：**
-```
-TELEGRAM_BOT_TOKEN = 123456:ABC-DEF...
-TELEGRAM_CHAT_ID = 123456789
-WECOM_WEBHOOK_URL = https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx
-PUSHPLUS_TOKEN = your-pushplus-token
-PUSHPLUS_TOPIC = your-topic-code
-PUSHPLUS_CHANNEL = wechat
-MAGICPUSH_URL = https://your-magicpush-api.com/notify
-MAGICPUSH_TOKEN = your-magicpush-token
-```
-
-当检测到仓库更新时，所有已配置的通知渠道都会收到通知。
-
-### 自定义通知
-
-如需添加自定义通知渠道，可以在 `worker.js` 中参考 `sendTelegramNotification`、`sendWeComNotification`、`sendPushPlusNotification` 和 `sendMagicPushNotification` 函数的实现方式，添加新的通知函数，并在 `notify` 函数中调用。
 
 ## 仪表盘页面
 
