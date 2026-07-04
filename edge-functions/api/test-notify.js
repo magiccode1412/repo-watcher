@@ -1,19 +1,23 @@
-import { sendMagicPushNotification } from '../services/notify.js';
-
 /**
- * 处理通知测试请求
- * @param {URL} url 请求 URL
- * @param {Object} env 环境变量
- * @returns {Promise<Response>}
+ * 通知测试接口
+ * 
+ * 访问路径: GET /api/test-notify
+ * 用于测试 MagicPush 通知配置是否正常工作
  */
-export async function handleTestNotify(url, env) {
+
+import { sendMagicPushNotification } from '../../lib/services/notify.js';
+
+export async function onRequestGet(context) {
+  const { env } = context;
+
   const mockResult = {
     repo: 'test/repo@main',
     hasUpdate: true,
     latestSha: 'abc1234567890',
     latestDate: new Date().toISOString(),
     previousSha: 'def0987654321',
-    isFirstCheck: false
+    isFirstCheck: false,
+    url: 'https://example.com/test/repo'
   };
 
   const results = [];

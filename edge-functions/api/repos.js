@@ -1,24 +1,22 @@
-import { parseRepoList, getRepoData } from '../utils/index.js';
-import { parseGiteeRepoList, parseGitLabRepoList, parseCnbRepoList } from '../services/index.js';
-
 /**
- * 处理获取仓库列表请求（公开接口，无需鉴权，支持 CORS）
- * @param {Request} request HTTP请求
- * @param {Object} env 环境变量
- * @returns {Promise<Response>}
+ * 公开 API: 获取仓库列表和状态
+ * 
+ * 访问路径: GET /api/repos
+ * 无需鉴权，支持 CORS，供第三方应用集成
  */
-export async function handleGetRepos(request, env) {
+
+import { parseRepoList, getRepoData } from '../../lib/utils/index.js';
+import { parseGiteeRepoList, parseGitLabRepoList, parseCnbRepoList } from '../../lib/services/index.js';
+
+export async function onRequestGet(context) {
+  const { env } = context;
+  
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json; charset=utf-8'
   };
-
-  // 处理预检请求
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
 
   try {
     const repos = [];
@@ -28,7 +26,7 @@ export async function handleGetRepos(request, env) {
     for (const repo of githubRepos) {
       const repoKey = `${repo.owner}/${repo.repo}@${repo.branch}`;
       const repoUrl = `https://github.com/${repo.owner}/${repo.repo}`;
-      const repoData = await getRepoData(env.KV_DEFAULT, repoKey, 'github');
+      const repoData = await getRepoData(repoKey, 'github');
 
       repos.push({
         platform: 'github',
@@ -49,7 +47,7 @@ export async function handleGetRepos(request, env) {
       for (const repo of giteeRepos) {
         const repoKey = `gitee:${repo.owner}/${repo.repo}@${repo.branch}`;
         const repoUrl = `https://gitee.com/${repo.owner}/${repo.repo}`;
-        const repoData = await getRepoData(env.KV_DEFAULT, repoKey, 'gitee');
+        const repoData = await getRepoData(repoKey, 'gitee');
 
         repos.push({
           platform: 'gitee',
@@ -74,7 +72,7 @@ export async function handleGetRepos(request, env) {
       for (const repo of gitlabRepos) {
         const repoKey = `gitlab:${repo.owner}/${repo.repo}@${repo.branch}`;
         const repoUrl = `https://${gitlabHost}/${repo.owner}/${repo.repo}`;
-        const repoData = await getRepoData(env.KV_DEFAULT, repoKey, 'gitlab');
+        const repoData = await getRepoData(repoKey, 'gitlab');
 
         repos.push({
           platform: 'gitlab',
@@ -98,7 +96,7 @@ export async function handleGetRepos(request, env) {
       for (const repo of cnbRepos) {
         const repoKey = `cnb:${repo.owner}/${repo.repo}@${repo.branch}`;
         const repoUrl = `https://cnb.cool/${repo.owner}/${repo.repo}`;
-        const repoData = await getRepoData(env.KV_DEFAULT, repoKey, 'cnb');
+        const repoData = await getRepoData(repoKey, 'cnb');
 
         repos.push({
           platform: 'cnb',
@@ -138,4 +136,15 @@ export async function handleGetRepos(request, env) {
       headers: corsHeaders
     });
   }
+}
+
+// 处理预检请求
+export async function onRequestOptions() {
+  return new Response(null, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  });
 }
