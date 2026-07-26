@@ -245,26 +245,30 @@ jobs:
 repo-watcher/
 ├── edge-functions/
 │   └── api/
-│       ├── [[...path]].js     # Catch-all: 仪表盘 + favicon
 │       ├── repos.js           # GET /api/repos 公开接口
-│       ├── check.js           # GET /api/check 手动检测
+│       ├── check.js           # GET|POST /api/check 手动/定时检测
 │       └── test-notify.js     # GET /api/test-notify 通知测试
 ├── lib/                       # 共享业务库
 │   ├── services/              # 服务层 (各平台 API + 通知)
+│   │   ├── index.js           # 服务统一导出 (barrel)
 │   │   ├── github.js
 │   │   ├── gitee.js
 │   │   ├── gitlab.js
 │   │   ├── cnb.js
 │   │   └── notify.js
 │   └── utils/                 # 工具函数
+│       ├── index.js           # 工具统一导出 (barrel)
 │       ├── kv.js              # KV 存储操作 (全局变量模式)
 │       ├── cache.js           # Cache API 封装 (caches.open)
 │       ├── parser.js          # 仓库字符串解析
 │       └── datetime.js        # 日期格式化
-├── public/                    # 静态文件目录
-│   ├── dashboard.html         # 仪表盘页面
-│   └── favicon.svg            # 网站图标
+├── dashboard.html             # 仪表盘页面 (根目录静态托管)
+├── favicon.svg                # 网站图标 (根目录静态托管)
+├── .cnb.yml                   # CNB 部署配置
+├── .cnb/
+│   └── web_trigger.yml        # CNB Web 触发器配置
 ├── package.json               # 项目配置
+├── skills-lock.json           # 技能锁定文件
 └── README.md                  # 项目文档
 ```
 
