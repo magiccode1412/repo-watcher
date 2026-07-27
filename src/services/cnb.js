@@ -15,7 +15,7 @@ export async function checkCnbBuildUpdate(repoInfo, env) {
 
   // 验证必需的 CNB Token
   if (!env.CNB_TOKEN) {
-    console.error('CNB_TOKEN 未配置，无法检测 CNB 仓库');
+    console.error('[cnb] CNB_TOKEN 未配置，无法检测 CNB 仓库');
     return {
       repo: repoKey,
       platform: 'cnb',
@@ -43,10 +43,13 @@ export async function checkCnbBuildUpdate(repoInfo, env) {
   const cache = caches.default;
   let response;
 
+  console.log(`[cnb] 开始检测仓库 ${repoKey} | apiBase=${apiBase} | cacheTtl=${cacheTtl}s`);
+
   try {
     let cachedResponse = await cache.match(cacheKey);
     if (!cachedResponse) {
       // 缓存未命中，调用 CNB API
+      console.log(`[cnb] 仓库 ${repoKey} 缓存未命中，请求 API: ${apiUrl}`);
       response = await fetch(apiUrl, { headers: requestHeaders });
 
       // 检查 API 响应状态
@@ -60,6 +63,7 @@ export async function checkCnbBuildUpdate(repoInfo, env) {
       await cache.put(cacheKey, cacheResponse.clone());
       response = cacheResponse;
     } else {
+      console.log(`[cnb] 仓库 ${repoKey} 命中缓存，跳过 API 请求`);
       response = cachedResponse;
     }
 
@@ -68,7 +72,7 @@ export async function checkCnbBuildUpdate(repoInfo, env) {
 
     // 获取最新提交信息
     if (!data || data.length === 0) {
-      console.log(`CNB 仓库 ${repoKey} 暂无提交记录`);
+      console.log(`[cnb] 仓库 ${repoKey} 暂无提交记录`);
       return {
         repo: repoKey,
         platform: 'cnb',
@@ -108,7 +112,10 @@ export async function checkCnbBuildUpdate(repoInfo, env) {
         author: authorName,
         url: repoUrl
       });
+      console.log(`[cnb] 仓库 ${repoKey} 已更新 KV 记录`);
     }
+
+    console.log(`[cnb] 仓库 ${repoKey} 检测完成 | previousSha=${previousSha || '(无)'} | latestSha=${latestSha} | hasUpdate=${hasUpdate} | isFirstCheck=${isFirstCheck}`);
 
     return {
       repo: repoKey,
@@ -124,7 +131,7 @@ export async function checkCnbBuildUpdate(repoInfo, env) {
       branch: branch
     };
   } catch (error) {
-    console.error(`检测 CNB 仓库 ${repoKey} 失败:`, error);
+    console.error(`[cnb] 检测仓库 ${repoKey} 失败:`, error);
     const previousData = await getRepoData(env.KV_DEFAULT, repoKey, 'cnb');
     const previousSha = previousData ? (previousData.sha || previousData) : null;
     return {

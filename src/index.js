@@ -25,6 +25,8 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
+    console.log(`[fetch] 收到请求 | method=${request.method} | path=${pathname}`);
+
     // 处理 favicon 请求
     if (pathname === '/favicon.ico' || pathname === '/favicon.svg') {
       return new Response(faviconSvg, {
@@ -93,11 +95,15 @@ export default {
    * @param {Object} ctx 执行上下文
    */
   async scheduled(event, env, ctx) {
+    const startTime = Date.now();
     const notifyOnFirstCheck = env.NOTIFY_ON_FIRST_CHECK === 'true';
     const results = [];
 
+    console.log('[scheduled] 定时检测任务启动');
+
     // 检测 GitHub 仓库
     const githubRepos = parseRepoList(env.GITHUB_REPO, env.GITHUB_BRANCH || 'main');
+    console.log(`[scheduled] GitHub 待检测仓库数量: ${githubRepos.length}`);
     for (const repo of githubRepos) {
       results.push(await checkRepoUpdate(repo, env));
     }
@@ -105,32 +111,52 @@ export default {
     // 检测 Gitee 仓库
     if (env.GITEE_REPO) {
       const giteeRepos = parseGiteeRepoList(env.GITEE_REPO, env.GITEE_BRANCH || 'master');
+      console.log(`[scheduled] Gitee 待检测仓库数量: ${giteeRepos.length}`);
       for (const repo of giteeRepos) {
         results.push(await checkGiteeRepoUpdate(repo, env));
       }
+    } else {
+      console.log('[scheduled] 未配置 GITEE_REPO，跳过 Gitee 检测');
     }
 
     // 检测 GitLab 仓库
     if (env.GITLAB_REPO) {
       const gitlabRepos = parseGitLabRepoList(env.GITLAB_REPO, env.GITLAB_BRANCH || 'main');
+      console.log(`[scheduled] GitLab 待检测仓库数量: ${gitlabRepos.length}`);
       for (const repo of gitlabRepos) {
         results.push(await checkGitLabRepoUpdate(repo, env));
       }
+    } else {
+      console.log('[scheduled] 未配置 GITLAB_REPO，跳过 GitLab 检测');
     }
 
     // 检测 CNB 仓库
     if (env.CNB_REPO) {
       const cnbRepos = parseCnbRepoList(env.CNB_REPO, env.CNB_BRANCH || 'main');
+      console.log(`[scheduled] CNB 待检测仓库数量: ${cnbRepos.length}`);
       for (const repo of cnbRepos) {
         results.push(await checkCnbBuildUpdate(repo, env));
       }
+    } else {
+      console.log('[scheduled] 未配置 CNB_REPO，跳过 CNB 检测');
     }
 
+    // 汇总检测情况
+    const updated = results.filter(r => r.hasUpdate);
+    const failed = results.filter(r => r.error);
+    console.log(`[scheduled] 检测完成: 总计 ${results.length} 个仓库，发现更新 ${updated.length} 个，失败 ${failed.length} 个`);
+
     // 发送通知
+    let notifyCount = 0;
     for (const result of results) {
       if (result.hasUpdate || (result.isFirstCheck && notifyOnFirstCheck)) {
+        notifyCount++;
         await notify(result, env);
       }
     }
+    console.log(`[scheduled] 本次发送通知 ${notifyCount} 条（NOTIFY_ON_FIRST_CHECK=${notifyOnFirstCheck}）`);
+
+    const cost = Date.now() - startTime;
+    console.log(`[scheduled] 定时检测任务结束，耗时 ${cost}ms`);
   }
 };

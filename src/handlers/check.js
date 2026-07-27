@@ -7,10 +7,13 @@ import { checkRepoUpdate, parseRepoString, parseRepoList, checkGiteeRepoUpdate, 
  * @returns {Promise<Response>}
  */
 export async function handleCheck(url, env) {
+  const startTime = Date.now();
   // 解析请求参数
   const targetRepo = url.searchParams.get('repo');
   const enableNotify = url.searchParams.get('notify') === 'true';
   const platform = url.searchParams.get('type') || 'all';
+
+  console.log(`[check] 收到手动检测请求 | platform=${platform} | targetRepo=${targetRepo || '全部'} | notify=${enableNotify}`);
 
   let results = [];
 
@@ -90,12 +93,18 @@ export async function handleCheck(url, env) {
 
   // 如果启用通知，发送通知
   if (enableNotify) {
+    let notifyCount = 0;
     for (const result of results) {
       if (result.hasUpdate || (result.isFirstCheck && env.NOTIFY_ON_FIRST_CHECK === 'true')) {
+        notifyCount++;
         await notify(result, env);
       }
     }
+    console.log(`[check] 已发送通知 ${notifyCount} 条`);
   }
+
+  const cost = Date.now() - startTime;
+  console.log(`[check] 检测完成 | 总数=${results.length} | 更新=${results.filter(r => r.hasUpdate).length} | 失败=${results.filter(r => r.error).length} | 耗时=${cost}ms`);
 
   // 返回检测结果
   return new Response(JSON.stringify({

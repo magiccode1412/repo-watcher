@@ -66,6 +66,8 @@ export async function checkGitLabRepoUpdate(repoInfo, env) {
     requestHeaders['PRIVATE-TOKEN'] = env.GITLAB_TOKEN;
   }
 
+  console.log(`[gitlab] 开始检测仓库 ${repoKey} | apiBase=${apiBase} | 认证=${!!env.GITLAB_TOKEN} | cacheTtl=${cacheTtl}s`);
+
   // 尝试从 Cache API 获取缓存
   const cacheKey = new Request(apiUrl, { headers: requestHeaders });
   const cache = caches.default;
@@ -75,6 +77,7 @@ export async function checkGitLabRepoUpdate(repoInfo, env) {
     let cachedResponse = await cache.match(cacheKey);
     if (!cachedResponse) {
       // 缓存未命中，调用 GitLab API
+      console.log(`[gitlab] 仓库 ${repoKey} 缓存未命中，请求 API: ${apiUrl}`);
       response = await fetch(apiUrl, { headers: requestHeaders });
 
       // 检查 API 响应状态
@@ -88,6 +91,7 @@ export async function checkGitLabRepoUpdate(repoInfo, env) {
       await cache.put(cacheKey, cacheResponse.clone());
       response = cacheResponse;
     } else {
+      console.log(`[gitlab] 仓库 ${repoKey} 命中缓存，跳过 API 请求`);
       response = cachedResponse;
     }
 
@@ -116,7 +120,10 @@ export async function checkGitLabRepoUpdate(repoInfo, env) {
         url: repoUrl,
         branch: branch
       });
+      console.log(`[gitlab] 仓库 ${repoKey} 已更新 KV 记录`);
     }
+
+    console.log(`[gitlab] 仓库 ${repoKey} 检测完成 | previousSha=${previousSha || '(无)'} | latestSha=${latestSha} | hasUpdate=${hasUpdate} | isFirstCheck=${isFirstCheck}`);
 
     return {
       repo: repoKey,
@@ -130,7 +137,7 @@ export async function checkGitLabRepoUpdate(repoInfo, env) {
       url: repoUrl
     };
   } catch (error) {
-    console.error(`检测 GitLab 仓库 ${repoKey} 失败:`, error);
+    console.error(`[gitlab] 检测仓库 ${repoKey} 失败:`, error);
     const previousData = await getRepoData(env.KV_DEFAULT, repoKey, 'gitlab');
     const previousSha = previousData ? (previousData.sha || previousData) : null;
     return {

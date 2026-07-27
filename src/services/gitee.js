@@ -62,6 +62,8 @@ export async function checkGiteeRepoUpdate(repoInfo, env) {
     requestUrl = `${apiUrl}?private_token=${env.GITEE_TOKEN}`;
   }
 
+  console.log(`[gitee] 开始检测仓库 ${repoKey} | 认证=${!!env.GITEE_TOKEN} | cacheTtl=${cacheTtl}s`);
+
   // 尝试从 Cache API 获取缓存
   const cacheKey = new Request(requestUrl, { headers: requestHeaders });
   const cache = caches.default;
@@ -71,6 +73,7 @@ export async function checkGiteeRepoUpdate(repoInfo, env) {
     let cachedResponse = await cache.match(cacheKey);
     if (!cachedResponse) {
       // 缓存未命中，调用 Gitee API
+      console.log(`[gitee] 仓库 ${repoKey} 缓存未命中，请求 API: ${apiUrl}`);
       response = await fetch(requestUrl, { headers: requestHeaders });
 
       // 检查 API 响应状态
@@ -84,6 +87,7 @@ export async function checkGiteeRepoUpdate(repoInfo, env) {
       await cache.put(cacheKey, cacheResponse.clone());
       response = cacheResponse;
     } else {
+      console.log(`[gitee] 仓库 ${repoKey} 命中缓存，跳过 API 请求`);
       response = cachedResponse;
     }
 
@@ -113,7 +117,10 @@ export async function checkGiteeRepoUpdate(repoInfo, env) {
         url: repoUrl,
         branch: branch
       });
+      console.log(`[gitee] 仓库 ${repoKey} 已更新 KV 记录`);
     }
+
+    console.log(`[gitee] 仓库 ${repoKey} 检测完成 | previousSha=${previousSha || '(无)'} | latestSha=${latestSha} | hasUpdate=${hasUpdate} | isFirstCheck=${isFirstCheck}`);
 
     return {
       repo: repoKey,
@@ -127,7 +134,7 @@ export async function checkGiteeRepoUpdate(repoInfo, env) {
       url: repoUrl
     };
   } catch (error) {
-    console.error(`检测 Gitee 仓库 ${repoKey} 失败:`, error);
+    console.error(`[gitee] 检测仓库 ${repoKey} 失败:`, error);
     const previousData = await getRepoData(env.KV_DEFAULT, repoKey, 'gitee');
     const previousSha = previousData ? (previousData.sha || previousData) : null;
     return {

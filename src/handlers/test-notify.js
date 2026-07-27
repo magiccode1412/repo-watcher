@@ -20,9 +20,12 @@ export async function handleTestNotify(url, env) {
 
   // MagicPush 测试
   if (env.MAGICPUSH_TOKEN && env.MAGICPUSH_URL) {
+    console.log('[test-notify] 开始测试 MagicPush 通知');
     await sendMagicPushNotification(mockResult, env);
     results.push({ channel: 'magicpush', status: 'success' });
+    console.log('[test-notify] MagicPush 通知测试完成');
   } else {
+    console.log('[test-notify] 未配置 MAGICPUSH_TOKEN 或 MAGICPUSH_URL，跳过测试');
     results.push({ channel: 'magicpush', status: 'skipped', reason: '未配置 MAGICPUSH_TOKEN 或 MAGICPUSH_URL' });
   }
 
