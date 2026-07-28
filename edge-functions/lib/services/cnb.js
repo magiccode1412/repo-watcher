@@ -126,4 +126,3 @@ export async function checkCnbBuildUpdate(repoInfo, env) {
   }
 }
 
-export { parseCnbRepoString, parseCnbRepoList };

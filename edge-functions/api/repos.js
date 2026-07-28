@@ -5,8 +5,8 @@
  * 无需鉴权，支持 CORS，供第三方应用集成
  */
 
-import { parseRepoList, getRepoData } from '../lib/utils/index.js';
-import { parseGiteeRepoList, parseGitLabRepoList, parseCnbRepoList } from '../lib/services/index.js';
+import { parseRepoList, parseCnbRepoList, getRepoData } from '../lib/utils/index.js';
+import { parseGiteeRepoList, parseGitLabRepoList } from '../lib/services/index.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
