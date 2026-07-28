@@ -14,7 +14,6 @@
 - **灵活配置**：通过环境变量配置仓库和分支
 - **定时检测**：支持外部 Cron 定时触发（替代 Cloudflare Cron Triggers）
 - **手动触发**：通过 HTTP 请求手动触发检测
-- **缓存优化**：集成 Cache API 减少 API 调用
 - **状态持久化**：使用 EdgeOne KV 存储记录上次检测的 commit SHA
 - **认证支持**：
   - 支持 GitHub Token 认证，提高 API 限流配额
@@ -87,7 +86,6 @@ npm run deploy
 | `GITHUB_REPO` | 否 | 监控的 GitHub 仓库列表，支持逗号或换行分隔 | `facebook/react,vuejs/core` |
 | `GITHUB_BRANCH` | 否 | 默认分支名称 | `main` |
 | `GITHUB_TOKEN` | 否 | Personal Access Token（提高 API 限流配额） | `ghp_xxxxxxxxxxxx` |
-| `GITHUB_CACHE_TTL` | 否 | 缓存过期时间（秒） | `300` |
 
 #### Gitee 平台配置
 
@@ -96,7 +94,6 @@ npm run deploy
 | `GITEE_REPO` | 否 | 监控的 Gitee 仓库列表 | `owner/repo1,owner/repo2` |
 | `GITEE_BRANCH` | 否 | 默认分支名称 | `master` |
 | `GITEE_TOKEN` | 否 | 私人令牌 | `your-gitee-token` |
-| `GITEE_CACHE_TTL` | 否 | 缓存过期时间（秒） | `300` |
 
 #### GitLab 平台配置
 
@@ -274,7 +271,6 @@ repo-watcher/
 │   └── utils/                 # 工具函数
 │       ├── index.js           # 工具统一导出 (barrel)
 │       ├── kv.js              # KV 存储操作 (全局变量模式)
-│       ├── cache.js           # Cache API 封装 (caches.open)
 │       ├── parser.js          # 仓库字符串解析
 │       └── datetime.js        # 日期格式化
 ├── dashboard.html             # 仪表盘页面 (根目录静态托管)
@@ -295,7 +291,6 @@ repo-watcher/
 |------|-------------------|----------------|
 | 导出格式 | `export default { fetch, scheduled }` | `export function onRequest(context)` |
 | KV 访问 | `env.KV_DEFAULT` | 全局变量 `KV_DEFAULT` |
-| Cache API | `caches.default` | `await caches.open('api-cache')` |
 | Cron 任务 | `scheduled()` 方法 | 外部 Cron 触发 HTTP 接口 |
 | 静态资源 | wrangler 打包 import | `public/` 目录自动托管 |
 | CLI 工具 | Wrangler | EdgeOne Makers CLI |
