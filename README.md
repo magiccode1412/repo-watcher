@@ -70,7 +70,6 @@ npm run deploy
 
 | 变量名 | 必填 | 说明 | 默认 |
 |--------|------|------|------|
-| `DEV_MODE` | 否 | 是否启用开发模式（允许手动触发检测） | `false` |
 | `NOTIFY_ON_FIRST_CHECK` | 否 | 首次检测是否通知 | `false` |
 | `TZ` | 否 | 时区设置 | `UTC+8` |
 | `CHECK_TOKEN` | 否（建议设置） | 调用 `/api/check` 接口的访问令牌，用于定时检测鉴权。未设置则拒绝所有请求。支持 `Authorization: Bearer <token>` 请求头或 `token` 查询参数传入 | 无 |
@@ -166,9 +165,7 @@ GET /api/repos
 }
 ```
 
-### 方式三：HTTP 请求触发（开发模式）
-
-> **注意**：手动触发需要设置环境变量 `DEV_MODE=true`，否则会返回 403。
+### 方式三：HTTP 请求触发
 
 **请求说明：**
 - 使用 `/api/check` 路径进行检测

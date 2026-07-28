@@ -2,7 +2,7 @@
  * 检测接口
  * 
  * 访问路径: 
- *   - GET /api/check - 手动检测（需开启 DEV_MODE）
+ *   - GET /api/check - 手动检测
  *   - POST /api/check - 定时任务触发
  * 
  * 参数:
@@ -135,7 +135,7 @@ function verifyToken(request, env, url) {
   return null;
 }
 
-// GET 请求 - 手动检测（需开启 DEV_MODE）
+// GET 请求 - 手动检测
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -146,14 +146,6 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({ code: tokenError.status, message: tokenError.error }), {
       status: tokenError.status,
       headers: { 'Content-Type': 'application/json; charset=utf-8' }
-    });
-  }
-
-  // 检查是否开启开发模式
-  if (env.DEV_MODE !== 'true') {
-    return new Response('开发模式已关闭', {
-      status: 403,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
   }
 
@@ -191,7 +183,7 @@ export async function onRequestGet(context) {
   }
 }
 
-// POST 请求 - 定时任务触发（无需 DEV_MODE）
+// POST 请求 - 定时任务触发
 export async function onRequestPost(context) {
   const { request, env } = context;
   const url = new URL(request.url);
