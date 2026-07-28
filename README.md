@@ -1,18 +1,18 @@
-# GitHub/Gitee/GitLab/CNB 仓库更新监控 - EdgeOne Makers
+# 项目仓库更新监控
 
-一个基于 EdgeOne Makers 边缘函数的多平台仓库更新监控工具，支持 GitHub、Gitee、GitLab 和 CNB 仓库的代码提交监控、定时检测和通知功能。
+一个基于 EdgeOne Makers 边缘函数的多平台仓库更新监控工具，支持 `GitHub`、`Gitee`、`GitLab` 和 `CNB` 仓库的代码提交监控、定时检测和通知功能。
 
 ## 预览
 
-![light](/static/readme/light.webp)
-![dark](/static/readme/dark.webp)
+![light](/public/light.png)
+![dark](/public/night.png)
 
 ## 功能特性
 
 - **多平台支持**：支持同时监控 GitHub、Gitee、GitLab 和 CNB 仓库的代码提交
 - **多仓库检测**：支持同时监控多个仓库
 - **灵活配置**：通过环境变量配置仓库和分支
-- **定时检测**：支持外部 Cron 定时触发（替代 Cloudflare Cron Triggers）
+- **定时检测**：支持外部 Cron 定时触发（奇葩的edgeone定时任务最少间隔一天，没法用）
 - **手动触发**：通过 HTTP 请求手动触发检测
 - **状态持久化**：使用 EdgeOne KV 存储记录上次检测的 commit SHA
 - **认证支持**：
@@ -29,10 +29,6 @@
 ### 前置条件
 
 1. 注册 [EdgeOne Makers](https://console.cloud.tencent.com/edgeone/pages) 账号
-2. 安装 EdgeOne Makers CLI:
-   ```bash
-   npm install -g edgeone-cli
-   ```
 
 ### 步骤一：启用 KV Storage（必须）
 
