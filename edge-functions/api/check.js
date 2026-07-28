@@ -105,10 +105,48 @@ async function performCheck(env, options = {}) {
   return { results };
 }
 
+/**
+ * 验证访问令牌
+ * 令牌通过环境变量 CHECK_TOKEN 配置（不设置默认值）。
+ * 支持以下方式传入令牌：
+ *   - Authorization: Bearer <token> 请求头
+ *   - token 查询参数
+ * 若环境变量未配置 CHECK_TOKEN，则拒绝所有请求。
+ */
+function verifyToken(request, env, url) {
+  const token = env.CHECK_TOKEN;
+  if (!token) {
+    return { error: '服务端未配置 CHECK_TOKEN，请在环境变量中设置访问令牌', status: 500 };
+  }
+
+  const authHeader = request.headers.get('Authorization');
+  let provided;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    provided = authHeader.slice(7).trim();
+  } else {
+    provided = url.searchParams.get('token');
+  }
+
+  if (!provided || provided !== token) {
+    return { error: '访问令牌无效', status: 401 };
+  }
+
+  return null;
+}
+
 // GET 请求 - 手动检测（需开启 DEV_MODE）
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
+
+  // 验证访问令牌
+  const tokenError = verifyToken(request, env, url);
+  if (tokenError) {
+    return new Response(JSON.stringify({ code: tokenError.status, message: tokenError.error }), {
+      status: tokenError.status,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
+  }
 
   // 检查是否开启开发模式
   if (env.DEV_MODE !== 'true') {
@@ -155,6 +193,20 @@ export async function onRequestGet(context) {
 // POST 请求 - 定时任务触发（无需 DEV_MODE）
 export async function onRequestPost(context) {
   const { request, env } = context;
+  const url = new URL(request.url);
+
+  // 验证访问令牌
+  const tokenError = verifyToken(request, env, url);
+  if (tokenError) {
+    return new Response(JSON.stringify({
+      code: tokenError.status,
+      message: tokenError.error,
+      executedAt: new Date().toISOString()
+    }), {
+      status: tokenError.status,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' }
+    });
+  }
 
   let options = {};
 

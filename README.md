@@ -78,6 +78,7 @@ npm run deploy
 | `DEV_MODE` | 否 | 是否启用开发模式（允许手动触发检测） | `false` |
 | `NOTIFY_ON_FIRST_CHECK` | 否 | 首次检测是否通知 | `false` |
 | `TZ` | 否 | 时区设置 | `UTC+8` |
+| `CHECK_TOKEN` | 否（建议设置） | 调用 `/api/check` 接口的访问令牌，用于定时检测鉴权。未设置则拒绝所有请求。支持 `Authorization: Bearer <token>` 请求头或 `token` 查询参数传入 | 无 |
 
 #### GitHub 平台配置
 
@@ -179,27 +180,39 @@ GET /api/repos
 **请求说明：**
 - 使用 `/api/check` 路径进行检测
 - 使用 `/api/test-notify` 路径测试通知
+- 若已配置 `CHECK_TOKEN`，调用时需携带令牌：通过请求头 `Authorization: Bearer <token>` 或查询参数 `?token=<token>` 传入，否则返回 401
 
 #### 检测所有仓库
 
-```
-GET /api/check
+```bash
+# 方式一：Authorization 请求头
+curl -H "Authorization: Bearer $CHECK_TOKEN" \
+  "https://your-project.edgeone.app/api/check"
+
+# 方式二：token 查询参数
+curl "https://your-project.edgeone.app/api/check?token=$CHECK_TOKEN"
 ```
 
 #### 检测指定平台
 
-```
-GET /api/check?type=github
-GET /api/check?type=cnb
+```bash
+curl -H "Authorization: Bearer $CHECK_TOKEN" \
+  "https://your-project.edgeone.app/api/check?type=github"
+
+curl -H "Authorization: Bearer $CHECK_TOKEN" \
+  "https://your-project.edgeone.app/api/check?type=cnb"
 ```
 
 #### 检测并发送通知
 
 添加 `notify=true` 参数：
 
-```
-GET /api/check?notify=true
-GET /api/check?type=cnb&notify=true
+```bash
+curl -H "Authorization: Bearer $CHECK_TOKEN" \
+  "https://your-project.edgeone.app/api/check?notify=true"
+
+curl -H "Authorization: Bearer $CHECK_TOKEN" \
+  "https://your-project.edgeone.app/api/check?type=cnb&notify=true"
 ```
 
 ### 方式四：定时检测（Cron 替代方案）
@@ -212,6 +225,7 @@ EdgeOne Edge Functions 不支持原生的 `scheduled()` 事件。替代方案如
 
 1. **cron-job.org** (免费)
    - 创建一个 cron job，URL 设为: `https://your-project.edgeone.app/api/check?notify=true`
+   - 若已配置 `CHECK_TOKEN`，请在请求的 **HTTP Headers** 中添加 `Authorization: Bearer <token>`（或在 URL 末尾追加 `&token=<token>`）
    - 设置执行频率（如每 30 分钟）
 
 2. **腾讯云 SCF 定时触发器**
@@ -236,7 +250,8 @@ jobs:
     steps:
       - name: Trigger repo check
         run: |
-          curl -X GET "https://your-project.edgeone.app/api/check?notify=true"
+          curl -X GET -H "Authorization: Bearer ${{ secrets.CHECK_TOKEN }}" \
+            "https://your-project.edgeone.app/api/check?notify=true"
 ```
 
 ## 项目结构

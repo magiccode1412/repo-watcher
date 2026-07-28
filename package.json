@@ -1,9 +1,9 @@
 {
     "name": "repo-watcher",
+    "private": true,
     "version": "1.0.0",
     "description": "仓库更新监控 - EdgeOne Makers",
     "type": "module",
-    "main": "edge-functions/api/[[...path]].js",
     "scripts": {
         "dev": "edgeone makers dev",
         "deploy": "edgeone makers deploy"
