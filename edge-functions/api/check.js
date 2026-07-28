@@ -11,7 +11,7 @@
  *   - notify=true: 检测后发送通知
  */
 
-import { checkRepoUpdate, parseRepoString, parseRepoList, checkGiteeRepoUpdate, parseGiteeRepoString, parseGiteeRepoList, checkGitLabRepoUpdate, parseGitLabRepoString, parseGitLabRepoList, checkCnbBuildUpdate, parseCnbRepoString, parseCnbRepoList, getRateLimitInfo, notify } from '../../lib/services/index.js';
+import { checkRepoUpdate, parseRepoString, parseRepoList, checkGiteeRepoUpdate, parseGiteeRepoString, parseGiteeRepoList, checkGitLabRepoUpdate, parseGitLabRepoString, parseGitLabRepoList, checkCnbBuildUpdate, parseCnbRepoString, parseCnbRepoList, getRateLimitInfo, notify } from '../lib/services/index.js';
 
 // 核心检测逻辑
 async function performCheck(env, options = {}) {

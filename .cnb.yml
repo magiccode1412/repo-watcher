@@ -1,12 +1,12 @@
 $:
   vscode:
     - docker:
-        image: docker.cnb.cool/magiccode1412/universal/node_20_dev:latest
+        image: docker.cnb.cool/magiccode1412/universal/node_24_dev:latest
       services:
         - vscode
         - docker
 
-  web_trigger_github:
+  push:
     - imports: https://cnb.cool/magiccode1412/secret/-/blob/main/env.yml
       stages:
         - name: sync_to_github

@@ -5,7 +5,7 @@
  * 用于测试 MagicPush 通知配置是否正常工作
  */
 
-import { sendMagicPushNotification } from '../../lib/services/notify.js';
+import { sendMagicPushNotification } from '../lib/services/notify.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
