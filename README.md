@@ -1,6 +1,8 @@
-# 项目仓库更新监控
+<h1 align="center">项目仓库更新监控</h1>
 
-一个基于 EdgeOne Makers 边缘函数的多平台仓库更新监控工具，支持 `GitHub`、`Gitee`、`GitLab` 和 `CNB` 仓库的代码提交监控、定时检测和通知功能。
+<p align="center">一个基于 EdgeOne Makers 边缘函数的多平台仓库更新监控工具，支持 `GitHub`、`Gitee`、`GitLab` 和 `CNB` 仓库的代码提交监控、定时检测和通知功能。</p>
+
+**⚠️注意⚠️**：本项目由cloudflare转到edgeone，原cf代码已存档至cloudflare分支
 
 ## 预览
 
@@ -30,7 +32,20 @@
 
 1. 注册 [EdgeOne Makers](https://console.cloud.tencent.com/edgeone/pages) 账号
 
-### 步骤一：启用 KV Storage（必须）
+
+### 步骤一：部署项目
+
++ 方式一：一键部署
+
+  [![使用 EdgeOne Pages 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://console.cloud.tencent.com/edgeone/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fmagiccode1412%2Frepo-watcher)
+
++ 方式二：手动部署
+  1. fork本项目，main分支即可
+  2. 在edgeone makers平台，从git仓库导入项目
+  3. 配置环境变量（参考步骤三）
+  4. 部署
+
+### 步骤二：启用 KV Storage（必须）
 
 1. 登录 [EdgeOne Makers 控制台](https://console.cloud.tencent.com/edgeone/pages)
 2. 进入 **"KV Storage"** 页面
@@ -41,26 +56,6 @@
 7. 确认绑定成功
 
 > ⚠️ **关键步骤**：变量名必须是 `KV_DEFAULT`，这是代码中使用的全局变量名称。
-
-### 步骤二：部署项目
-
-```bash
-# 1. 克隆或下载本项目
-git clone <your-repo-url>
-cd repo-watcher
-
-# 2. 登录 EdgeOne（首次使用）
-edgeone makers login
-
-# 3. 关联远程项目（如果尚未关联）
-edgeone makers link
-
-# 4. 本地开发测试
-npm run dev
-
-# 5. 部署到生产环境
-npm run deploy
-```
 
 ### 步骤三：配置环境变量
 
@@ -123,7 +118,7 @@ npm run deploy
 直接访问项目的根路径 `/`，即可打开监控仪表盘页面：
 
 ```
-https://your-project.edgeone.app/
+https://<your-domain>/
 ```
 
 **仪表盘功能：**
@@ -177,20 +172,20 @@ GET /api/repos
 ```bash
 # 方式一：Authorization 请求头
 curl -H "Authorization: Bearer $CHECK_TOKEN" \
-  "https://your-project.edgeone.app/api/check"
+  "https://<your-domain>/api/check"
 
 # 方式二：token 查询参数
-curl "https://your-project.edgeone.app/api/check?token=$CHECK_TOKEN"
+curl "https://<your-domain>/api/check?token=$CHECK_TOKEN"
 ```
 
 #### 检测指定平台
 
 ```bash
 curl -H "Authorization: Bearer $CHECK_TOKEN" \
-  "https://your-project.edgeone.app/api/check?type=github"
+  "https://<your-domain>/api/check?type=github"
 
 curl -H "Authorization: Bearer $CHECK_TOKEN" \
-  "https://your-project.edgeone.app/api/check?type=cnb"
+  "https://<your-domain>/api/check?type=cnb"
 ```
 
 #### 检测并发送通知
@@ -199,50 +194,24 @@ curl -H "Authorization: Bearer $CHECK_TOKEN" \
 
 ```bash
 curl -H "Authorization: Bearer $CHECK_TOKEN" \
-  "https://your-project.edgeone.app/api/check?notify=true"
+  "https://<your-domain>/api/check?notify=true"
 
 curl -H "Authorization: Bearer $CHECK_TOKEN" \
-  "https://your-project.edgeone.app/api/check?type=cnb&notify=true"
+  "https://<your-domain>/api/check?type=cnb&notify=true"
 ```
 
 ### 方式四：定时检测（Cron 替代方案）
 
-EdgeOne Edge Functions 不支持原生的 `scheduled()` 事件。替代方案如下：
-
-#### 方案 A：使用外部 Cron 服务
-
 推荐使用以下免费服务定期调用你的检测接口：
 
 1. **cron-job.org** (免费)
-   - 创建一个 cron job，URL 设为: `https://your-project.edgeone.app/api/check?notify=true`
+   - 创建一个 cron job，URL 设为: `https://<your-domain>/api/check?notify=true`
    - 若已配置 `CHECK_TOKEN`，请在请求的 **HTTP Headers** 中添加 `Authorization: Bearer <token>`（或在 URL 末尾追加 `&token=<token>`）
    - 设置执行频率（如每 30 分钟）
 
 2. **腾讯云 SCF 定时触发器**
    - 创建一个云函数，通过 HTTP 调用你的接口
    - 配置定时触发规则
-
-#### 方案 B：使用 GitHub Actions
-
-在项目中添加 `.github/workflows/cron-check.yml`:
-
-```yaml
-name: Repo Check Cron
-on:
-  schedule:
-    # 每 30 分钟执行一次 (UTC 时间)
-    - cron: '*/30 * * * *'
-  workflow_dispatch:  # 允许手动触发
-
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger repo check
-        run: |
-          curl -X GET -H "Authorization: Bearer ${{ secrets.CHECK_TOKEN }}" \
-            "https://your-project.edgeone.app/api/check?notify=true"
-```
 
 ## 项目结构
 
@@ -289,27 +258,12 @@ repo-watcher/
 └── README.md                  # 项目文档
 ```
 
-## 从 Cloudflare Workers 迁移
-
-如果你是从 Cloudflare Workers 版本迁移过来，主要变更点：
-
-| 项目 | Cloudflare Workers | EdgeOne Makers |
-|------|-------------------|----------------|
-| 导出格式 | `export default { fetch, scheduled }` | `export function onRequest(context)` |
-| KV 访问 | `env.KV_DEFAULT` | 全局变量 `KV_DEFAULT` |
-| Cron 任务 | `scheduled()` 方法 | 外部 Cron 触发 HTTP 接口 |
-| 静态资源 | wrangler 打包 import | `public/` 目录自动托管 |
-| CLI 工具 | Wrangler | EdgeOne Makers CLI |
-
 ## 注意事项
 
 1. **GitHub API 限流**：未认证请求限制 60 次/小时，建议配置 GitHub Token
 2. **Gitee API 限制**：建议配置 Gitee Token 以提高限流配额
 3. **GitLab API 限制**：自托管 GitLab 可能有不同的限流策略
 4. **CNB API 限制**：CNB Token 必须配置
-5. **KV 存储限制**：免费账户有读写次数限制，合理设置检测频率
-6. **通知频率**：避免过于频繁的通知造成骚扰
-7. **开发模式**：默认关闭手动触发检测，测试完成后建议关闭
 
 ## 许可证
 
