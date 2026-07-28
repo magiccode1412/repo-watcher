@@ -255,30 +255,43 @@ jobs:
 
 ```
 repo-watcher/
-├── edge-functions/
-│   └── api/
-│       ├── repos.js           # GET /api/repos 公开接口
-│       ├── check.js           # GET|POST /api/check 手动/定时检测
-│       └── test-notify.js     # GET /api/test-notify 通知测试
-├── lib/                       # 共享业务库
-│   ├── services/              # 服务层 (各平台 API + 通知)
-│   │   ├── index.js           # 服务统一导出 (barrel)
-│   │   ├── github.js
-│   │   ├── gitee.js
-│   │   ├── gitlab.js
-│   │   ├── cnb.js
-│   │   └── notify.js
-│   └── utils/                 # 工具函数
-│       ├── index.js           # 工具统一导出 (barrel)
-│       ├── kv.js              # KV 存储操作 (全局变量模式)
-│       ├── parser.js          # 仓库字符串解析
-│       └── datetime.js        # 日期格式化
-├── dashboard.html             # 仪表盘页面 (根目录静态托管)
-├── favicon.svg                # 网站图标 (根目录静态托管)
-├── .cnb.yml                   # CNB 部署配置
-├── .cnb/
-│   └── web_trigger.yml        # CNB Web 触发器配置
+├── edge-functions/            # 边缘函数 (EdgeOne Makers)
+│   ├── api/                   # HTTP 接口
+│   │   ├── repos.js           # GET /api/repos 公开接口
+│   │   ├── check.js           # GET|POST /api/check 手动/定时检测
+│   │   └── test-notify.js     # GET /api/test-notify 通知测试
+│   └── lib/                   # 共享业务库
+│       ├── services/          # 服务层 (各平台 API + 通知)
+│       │   ├── index.js       # 服务统一导出 (barrel)
+│       │   ├── github.js
+│       │   ├── gitee.js
+│       │   ├── gitlab.js
+│       │   ├── cnb.js
+│       │   └── notify.js
+│       └── utils/             # 工具函数
+│           ├── index.js       # 工具统一导出 (barrel)
+│           ├── kv.js          # KV 存储操作 (全局变量模式)
+│           ├── parser.js      # 仓库字符串解析
+│           └── datetime.js    # 日期格式化
+├── public/                    # 静态资源 (自动托管)
+│   └── favicon.svg            # 网站图标
+├── src/                       # 前端仪表盘 (Vite + Vue)
+│   ├── components/            # Vue 组件
+│   │   ├── BrandIcon.vue
+│   │   ├── RepoCard.vue
+│   │   └── StatCard.vue
+│   ├── composables/           # 组合式函数
+│   │   └── useRepos.js        # 仓库数据获取逻辑
+│   ├── utils/                 # 前端工具函数
+│   │   └── time.js            # 时间格式化
+│   ├── App.vue                # 根组件
+│   ├── main.js                # 入口文件
+│   └── style.css              # 全局样式
+├── index.html                 # Vite 入口 HTML
+├── favicon.svg                # 网站图标 (根目录)
+├── vite.config.js             # Vite 配置
 ├── package.json               # 项目配置
+├── package-lock.json          # 依赖锁定文件
 ├── skills-lock.json           # 技能锁定文件
 └── README.md                  # 项目文档
 ```
