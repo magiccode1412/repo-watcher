@@ -254,8 +254,9 @@ repo-watcher/
 │           ├── jwt.js         # JWT 双 Token 签名/校验
 │           ├── admin.js       # 管理员哈希与会话
 │           └── middleware.js  # 鉴权中间件辅助
-├── cloud-functions/           # Cloud Functions (Node 运行时，与 edge 对齐)
-│   └── api/admin/             # 管理后台接口（复用 edge-functions/lib）
+├── cloud-functions/           # 已移除：EdgeOne Makers 的 KV 仅在 Edge Functions 可用，
+│                              #         Node 运行时无法访问 KV 全局变量会导致 /api/admin/* 超时，
+│                              #         故管理后台接口统一由 edge-functions/api/admin/ 处理
 ├── public/                    # 静态资源 (自动托管)
 │   └── favicon.svg            # 网站图标
 ├── src/                       # 前端仪表盘 (Vite + Vue)

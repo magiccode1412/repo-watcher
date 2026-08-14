@@ -12,31 +12,60 @@
 // 所有 KV 存储键统一加上的前缀
 const KV_KEY_PREFIX = 'repo_watcher_';
 
-// MY_KV 全局变量（Edge Functions 与 Cloud Functions Node 运行时均通过全局变量访问）
-const KV = MY_KV;
+// MY_KV / my_kv 全局变量（EdgeOne Makers 控制台绑定 KV 命名空间，变量名大小写敏感）
+// 为避免模块加载阶段因变量名大小写不一致导致 ReferenceError，改为按需动态解析。
+// 兼容来源优先级：MY_KV（大写）> my_kv（小写）> globalThis > context.env（部分运行时）
+function getKV() {
+  if (typeof MY_KV !== 'undefined' && MY_KV) return MY_KV;
+  if (typeof my_kv !== 'undefined' && my_kv) return my_kv;
+  const g = typeof globalThis !== 'undefined' ? globalThis : {};
+  if (g.MY_KV) return g.MY_KV;
+  if (g.my_kv) return g.my_kv;
+  return undefined;
+}
+
+// KV 调用超时保护：避免客户端异常时请求永久 pending 导致 504 超时
+const KV_TIMEOUT_MS = 8000;
+function withTimeout(promise, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`KV ${label} timeout`)), KV_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 function withPrefix(key) {
   return `${KV_KEY_PREFIX}${key}`;
 }
 
 export async function kvGet(key) {
-  return KV.get(withPrefix(key));
+  const kv = getKV();
+  if (!kv) throw new Error('KV not bound (MY_KV/my_kv undefined)');
+  return withTimeout(kv.get(withPrefix(key)), 'get');
 }
 
 export async function kvGetJSON(key) {
-  return KV.get(withPrefix(key), 'json');
+  const kv = getKV();
+  if (!kv) throw new Error('KV not bound (MY_KV/my_kv undefined)');
+  return withTimeout(kv.get(withPrefix(key), 'json'), 'getJSON');
 }
 
 export async function kvPut(key, value) {
-  return KV.put(withPrefix(key), value);
+  const kv = getKV();
+  if (!kv) throw new Error('KV not bound (MY_KV/my_kv undefined)');
+  return withTimeout(kv.put(withPrefix(key), value), 'put');
 }
 
 export async function kvPutJSON(key, value) {
-  return KV.put(withPrefix(key), JSON.stringify(value));
+  const kv = getKV();
+  if (!kv) throw new Error('KV not bound (MY_KV/my_kv undefined)');
+  return withTimeout(kv.put(withPrefix(key), JSON.stringify(value)), 'putJSON');
 }
 
 export async function kvDelete(key) {
-  return KV.delete(withPrefix(key));
+  const kv = getKV();
+  if (!kv) throw new Error('KV not bound (MY_KV/my_kv undefined)');
+  return withTimeout(kv.delete(withPrefix(key)), 'delete');
 }
 
 /**
