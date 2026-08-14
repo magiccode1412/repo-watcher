@@ -3,17 +3,17 @@ import { getRepoData, saveRepoData } from '../utils/kv.js';
 /**
  * 检测 CNB 仓库代码提交更新
  * @param {{owner: string, repo: string, branch: string}} repoInfo CNB 仓库信息
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象
  * @returns {Promise<Object>}
  */
-export async function checkCnbBuildUpdate(repoInfo, env) {
+export async function checkCnbBuildUpdate(repoInfo, config) {
   const { owner, repo, branch } = repoInfo;
   const repoKey = `cnb:${owner}/${repo}@${branch}`;
-  const apiBase = env.CNB_API_BASE || 'https://api.cnb.cool';
+  const apiBase = config?.cnb?.apiBase || 'https://api.cnb.cool';
   const repoUrl = `https://cnb.cool/${owner}/${repo}`;
 
   // 验证必需的 CNB Token
-  if (!env.CNB_TOKEN) {
+  if (!config?.cnb?.token) {
     console.error('CNB_TOKEN 未配置，无法检测 CNB 仓库');
     return {
       repo: repoKey,
@@ -34,7 +34,7 @@ export async function checkCnbBuildUpdate(repoInfo, env) {
   const apiUrl = `${apiBase}/api/v4/projects/${encodedPath}/repository/commits?ref_name=${encodeURIComponent(branch)}&per_page=1`;
   const requestHeaders = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${env.CNB_TOKEN}`
+    'Authorization': `Bearer ${config.cnb.token}`
   };
 
   let response;

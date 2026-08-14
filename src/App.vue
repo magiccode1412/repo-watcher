@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
+  <div v-if="page === 'dashboard'" class="container mx-auto px-4 py-8 max-w-6xl">
     <!-- 头部 -->
     <header class="mb-8">
       <div class="flex items-center justify-between">
@@ -8,6 +8,10 @@
           <p class="text-slate-500 dark:text-slate-400">实时监控 GitHub、Gitee、GitLab 和 CNB 仓库状态</p>
         </div>
         <div class="flex items-center gap-4">
+          <a href="/admin"
+            class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors text-sm">
+            管理后台
+          </a>
           <span class="text-sm text-slate-400 dark:text-slate-500">{{ lastUpdate || '加载中...' }}</span>
           <button @click="loadData"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2">
@@ -102,13 +106,45 @@
       <a href="https://github.com/magiccode1412/repo-watcher" target="_blank" class="underline">Github</a>
     </footer>
   </div>
+
+  <!-- 管理后台：初始化 / 登录 / 控制台 -->
+  <AdminInit v-if="page === 'admin' && !initialized" />
+  <AdminLogin v-else-if="page === 'admin' && initialized" />
+  <AdminConsole v-else-if="page === 'console'" />
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
 import StatCard from './components/StatCard.vue'
 import RepoCard from './components/RepoCard.vue'
 import BrandIcon from './components/BrandIcon.vue'
+import AdminInit from './views/AdminInit.vue'
+import AdminLogin from './views/AdminLogin.vue'
+import AdminConsole from './views/AdminConsole.vue'
 import { useRepos } from './composables/useRepos.js'
+
+// 轻量页面切换（不引入路由库），基于 location.pathname
+const pathname = ref(location.pathname)
+const page = computed(() => {
+  if (pathname.value.startsWith('/admin/console')) return 'console'
+  if (pathname.value.startsWith('/admin')) return 'admin'
+  return 'dashboard'
+})
+
+// 管理后台：是否已初始化（决定显示初始化向导还是登录页）
+const initialized = ref(false)
+const { apiUrl: adminApiUrl } = useAdminAuth()
+async function checkInit() {
+  if (page.value !== 'admin') return
+  try {
+    const res = await fetch(adminApiUrl('/api/admin/init'))
+    const data = await res.json()
+    if (res.ok) initialized.value = data.data.initialized
+  } catch {
+    initialized.value = false
+  }
+}
+onMounted(checkInit)
 
 const { data, error, lastUpdate, loadData } = useRepos()
 

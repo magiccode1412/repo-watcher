@@ -1,56 +1,59 @@
 /**
  * 检测接口
- * 
- * 访问路径: 
+ *
+ * 访问路径:
  *   - GET /api/check - 手动检测
  *   - POST /api/check - 定时任务触发
- * 
+ *
  * 参数:
  *   - repo: 指定仓库名称 (owner/repo 或 owner/repo@branch)
  *   - type: 指定平台 (all/github/gitee/gitlab/cnb)
  *   - notify=true: 检测后发送通知
+ *
+ * 调用鉴权：config.checkToken（存于 KV，加密），通过环境变量 CHECK_TOKEN 兜底。
  */
 
 import { parseRepoString, parseRepoList, parseCnbRepoString, parseCnbRepoList } from '../lib/utils/index.js';
 import { checkRepoUpdate, checkGiteeRepoUpdate, parseGiteeRepoString, parseGiteeRepoList, checkGitLabRepoUpdate, parseGitLabRepoString, parseGitLabRepoList, checkCnbBuildUpdate, getRateLimitInfo, notify } from '../lib/services/index.js';
+import { getConfig } from '../lib/config.js';
 
 // 核心检测逻辑
-async function performCheck(env, options = {}) {
+async function performCheck(config, options = {}) {
   const { targetRepo, enableNotify = false, platform = 'all' } = options;
-  
+
   let results = [];
 
   // GitHub 仓库检测
   if (platform === 'all' || platform === 'github') {
     if (targetRepo && platform === 'github') {
-      const repoInfo = parseRepoString(targetRepo, env.GITHUB_BRANCH || 'main');
+      const repoInfo = parseRepoString(targetRepo, config.github?.branch || 'main');
       if (repoInfo) {
-        results.push(await checkRepoUpdate(repoInfo, env));
+        results.push(await checkRepoUpdate(repoInfo, config));
       } else {
         return { error: '仓库格式错误，正确格式：owner/repo 或 owner/repo@branch', status: 400 };
       }
     } else if (!targetRepo) {
-      const repos = parseRepoList(env.GITHUB_REPO, env.GITHUB_BRANCH || 'main');
+      const repos = parseRepoList(config.github?.repo, config.github?.branch || 'main');
       for (const repo of repos) {
-        results.push(await checkRepoUpdate(repo, env));
+        results.push(await checkRepoUpdate(repo, config));
       }
     }
   }
 
   // Gitee 仓库检测
   if (platform === 'all' || platform === 'gitee') {
-    if (env.GITEE_REPO) {
+    if (config.gitee?.repo) {
       if (targetRepo && platform === 'gitee') {
-        const repoInfo = parseGiteeRepoString(targetRepo, env.GITEE_BRANCH || 'master');
+        const repoInfo = parseGiteeRepoString(targetRepo, config.gitee.branch || 'master');
         if (repoInfo) {
-          results.push(await checkGiteeRepoUpdate(repoInfo, env));
+          results.push(await checkGiteeRepoUpdate(repoInfo, config));
         } else {
           return { error: 'Gitee 仓库格式错误', status: 400 };
         }
       } else if (!targetRepo) {
-        const repos = parseGiteeRepoList(env.GITEE_REPO, env.GITEE_BRANCH || 'master');
+        const repos = parseGiteeRepoList(config.gitee.repo, config.gitee.branch || 'master');
         for (const repo of repos) {
-          results.push(await checkGiteeRepoUpdate(repo, env));
+          results.push(await checkGiteeRepoUpdate(repo, config));
         }
       }
     }
@@ -58,18 +61,18 @@ async function performCheck(env, options = {}) {
 
   // GitLab 仓库检测
   if (platform === 'all' || platform === 'gitlab') {
-    if (env.GITLAB_REPO) {
+    if (config.gitlab?.repo) {
       if (targetRepo && platform === 'gitlab') {
-        const repoInfo = parseGitLabRepoString(targetRepo, env.GITLAB_BRANCH || 'main');
+        const repoInfo = parseGitLabRepoString(targetRepo, config.gitlab.branch || 'main');
         if (repoInfo) {
-          results.push(await checkGitLabRepoUpdate(repoInfo, env));
+          results.push(await checkGitLabRepoUpdate(repoInfo, config));
         } else {
           return { error: 'GitLab 仓库格式错误', status: 400 };
         }
       } else if (!targetRepo) {
-        const repos = parseGitLabRepoList(env.GITLAB_REPO, env.GITLAB_BRANCH || 'main');
+        const repos = parseGitLabRepoList(config.gitlab.repo, config.gitlab.branch || 'main');
         for (const repo of repos) {
-          results.push(await checkGitLabRepoUpdate(repo, env));
+          results.push(await checkGitLabRepoUpdate(repo, config));
         }
       }
     }
@@ -77,18 +80,18 @@ async function performCheck(env, options = {}) {
 
   // CNB 仓库检测
   if (platform === 'all' || platform === 'cnb') {
-    if (env.CNB_REPO) {
+    if (config.cnb?.repo) {
       if (targetRepo && platform === 'cnb') {
-        const repoInfo = parseCnbRepoString(targetRepo, env.CNB_BRANCH || 'main');
+        const repoInfo = parseCnbRepoString(targetRepo, config.cnb.branch || 'main');
         if (repoInfo) {
-          results.push(await checkCnbBuildUpdate(repoInfo, env));
+          results.push(await checkCnbBuildUpdate(repoInfo, config));
         } else {
           return { error: 'CNB 仓库格式错误', status: 400 };
         }
       } else if (!targetRepo) {
-        const repos = parseCnbRepoList(env.CNB_REPO, env.CNB_BRANCH || 'main');
+        const repos = parseCnbRepoList(config.cnb.repo, config.cnb.branch || 'main');
         for (const repo of repos) {
-          results.push(await checkCnbBuildUpdate(repo, env));
+          results.push(await checkCnbBuildUpdate(repo, config));
         }
       }
     }
@@ -97,8 +100,8 @@ async function performCheck(env, options = {}) {
   // 如果启用通知，发送通知
   if (enableNotify) {
     for (const result of results) {
-      if (result.hasUpdate || (result.isFirstCheck && env.NOTIFY_ON_FIRST_CHECK === 'true')) {
-        await notify(result, env);
+      if (result.hasUpdate || (result.isFirstCheck && config.notifyOnFirstCheck === true)) {
+        await notify(result, config);
       }
     }
   }
@@ -108,16 +111,12 @@ async function performCheck(env, options = {}) {
 
 /**
  * 验证访问令牌
- * 令牌通过环境变量 CHECK_TOKEN 配置（不设置默认值）。
- * 支持以下方式传入令牌：
- *   - Authorization: Bearer <token> 请求头
- *   - token 查询参数
- * 若环境变量未配置 CHECK_TOKEN，则拒绝所有请求。
+ * 令牌来源优先级：KV 配置 config.checkToken > 环境变量 CHECK_TOKEN
  */
-function verifyToken(request, env, url) {
-  const token = env.CHECK_TOKEN;
+function verifyToken(request, config, url) {
+  const token = config.checkToken || CHECK_TOKEN;
   if (!token) {
-    return { error: '服务端未配置 CHECK_TOKEN，请在环境变量中设置访问令牌', status: 500 };
+    return { error: '服务端未配置 CHECK_TOKEN，请在管理后台或环境变量中设置访问令牌', status: 500 };
   }
 
   const authHeader = request.headers.get('Authorization');
@@ -140,8 +139,10 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
 
+  const config = await getConfig();
+
   // 验证访问令牌
-  const tokenError = verifyToken(request, env, url);
+  const tokenError = verifyToken(request, config, url);
   if (tokenError) {
     return new Response(JSON.stringify({ code: tokenError.status, message: tokenError.error }), {
       status: tokenError.status,
@@ -154,8 +155,8 @@ export async function onRequestGet(context) {
   const platform = url.searchParams.get('type') || 'all';
 
   try {
-    const result = await performCheck(env, { targetRepo, enableNotify, platform });
-    
+    const result = await performCheck(config, { targetRepo, enableNotify, platform });
+
     if (result.error) {
       return new Response(JSON.stringify({ code: 400, message: result.error }), {
         status: 400,
@@ -167,7 +168,7 @@ export async function onRequestGet(context) {
       code: 200,
       message: enableNotify ? '检测完成，通知已发送' : '检测完成',
       data: result.results,
-      rateLimit: await getRateLimitInfo(env)
+      rateLimit: await getRateLimitInfo(config)
     }, null, 2), {
       headers: { 'Content-Type': 'application/json; charset=utf-8' }
     });
@@ -188,8 +189,10 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const url = new URL(request.url);
 
+  const config = await getConfig();
+
   // 验证访问令牌
-  const tokenError = verifyToken(request, env, url);
+  const tokenError = verifyToken(request, config, url);
   if (tokenError) {
     return new Response(JSON.stringify({
       code: tokenError.status,
@@ -217,11 +220,11 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const result = await performCheck(env, options);
-    
+    const result = await performCheck(config, options);
+
     if (result.error) {
-      return new Response(JSON.stringify({ 
-        code: 400, 
+      return new Response(JSON.stringify({
+        code: 400,
         message: result.error,
         executedAt: new Date().toISOString()
       }), {
@@ -234,7 +237,7 @@ export async function onRequestPost(context) {
       code: 200,
       message: options.enableNotify ? '定时检测完成，通知已发送' : '定时检测完成',
       data: result.results,
-      rateLimit: await getRateLimitInfo(env),
+      rateLimit: await getRateLimitInfo(config),
       executedAt: new Date().toISOString()
     }, null, 2), {
       headers: { 'Content-Type': 'application/json; charset=utf-8' }

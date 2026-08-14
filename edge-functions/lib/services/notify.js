@@ -3,11 +3,11 @@ import { formatDateTime } from '../utils/datetime.js';
 /**
  * MagicPush 通知
  * @param {Object} result 检测结果
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象
  */
-export async function sendMagicPushNotification(result, env) {
+export async function sendMagicPushNotification(result, config) {
   try {
-    const formattedTime = formatDateTime(result.latestDate, env.TZ);
+    const formattedTime = formatDateTime(result.latestDate, config?.tz);
     let title, content;
 
     // 根据 platform 生成不同的通知消息
@@ -49,11 +49,11 @@ export async function sendMagicPushNotification(result, env) {
                 `- **时间**：${formattedTime}`;
     }
 
-    const response = await fetch(env.MAGICPUSH_URL, {
+    const response = await fetch(config?.magicpush?.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${env.MAGICPUSH_TOKEN}`
+        'Authorization': `Bearer ${config?.magicpush?.token}`
       },
       body: JSON.stringify({
         title: title,
@@ -76,9 +76,9 @@ export async function sendMagicPushNotification(result, env) {
 /**
  * 主通知函数 - 使用 MagicPush 发送通知
  * @param {Object} result 检测结果
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象
  */
-export async function notify(result, env) {
+export async function notify(result, config) {
   // 根据平台类型输出不同的日志
   if (result.platform === 'cnb') {
     console.log(`检测到 CNB 构建更新: ${result.repo}`);
@@ -95,9 +95,9 @@ export async function notify(result, env) {
   }
 
   // MagicPush 通知
-  if (env.MAGICPUSH_TOKEN && env.MAGICPUSH_URL) {
-    await sendMagicPushNotification(result, env);
+  if (config?.magicpush?.token && config?.magicpush?.url) {
+    await sendMagicPushNotification(result, config);
   } else {
-    console.log('未配置 MagicPush 通知（MAGICPUSH_TOKEN / MAGICPUSH_URL）');
+    console.log('未配置 MagicPush 通知（magicpush.token / magicpush.url）');
   }
 }

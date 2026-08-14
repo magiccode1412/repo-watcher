@@ -3,10 +3,10 @@ import { getRepoData, saveRepoData } from '../utils/index.js';
 /**
  * 检测单个仓库是否有更新
  * @param {{owner: string, repo: string, branch: string}} repoInfo 仓库信息
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象（来自 KV，已解密）
  * @returns {Promise<Object>}
  */
-export async function checkRepoUpdate(repoInfo, env) {
+export async function checkRepoUpdate(repoInfo, config) {
   const { owner, repo, branch } = repoInfo;
   const repoKey = `${owner}/${repo}@${branch}`;
   const repoUrl = `https://github.com/${owner}/${repo}`;
@@ -18,8 +18,8 @@ export async function checkRepoUpdate(repoInfo, env) {
   };
 
   // 判断是否启用认证
-  if (env.GITHUB_TOKEN) {
-    requestHeaders['Authorization'] = `Bearer ${env.GITHUB_TOKEN}`;
+  if (config?.github?.token) {
+    requestHeaders['Authorization'] = `Bearer ${config.github.token}`;
   }
 
   let response;
@@ -90,16 +90,16 @@ export async function checkRepoUpdate(repoInfo, env) {
 
 /**
  * 获取 GitHub API 限流信息
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象
  * @returns {Promise<Object>}
  */
-export async function getRateLimitInfo(env) {
+export async function getRateLimitInfo(config) {
   const requestHeaders = {
     'User-Agent': 'GitHub-Repo-Watcher-EdgeOne-Makers',
   };
 
-  if (env.GITHUB_TOKEN) {
-    requestHeaders['Authorization'] = `Bearer ${env.GITHUB_TOKEN}`;
+  if (config?.github?.token) {
+    requestHeaders['Authorization'] = `Bearer ${config.github.token}`;
   }
 
   try {

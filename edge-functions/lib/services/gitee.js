@@ -40,10 +40,10 @@ export function parseGiteeRepoList(repoStr, defaultBranch) {
 /**
  * 检测单个 Gitee 仓库是否有更新
  * @param {{owner: string, repo: string, branch: string}} repoInfo 仓库信息
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象
  * @returns {Promise<Object>}
  */
-export async function checkGiteeRepoUpdate(repoInfo, env) {
+export async function checkGiteeRepoUpdate(repoInfo, config) {
   const { owner, repo, branch } = repoInfo;
   const repoKey = `gitee:${owner}/${repo}@${branch}`;
   const repoUrl = `https://gitee.com/${owner}/${repo}`;
@@ -56,8 +56,8 @@ export async function checkGiteeRepoUpdate(repoInfo, env) {
 
   // 构建请求 URL（Gitee 使用 private_token 参数认证）
   let requestUrl = apiUrl;
-  if (env.GITEE_TOKEN) {
-    requestUrl = `${apiUrl}?private_token=${env.GITEE_TOKEN}`;
+  if (config?.gitee?.token) {
+    requestUrl = `${apiUrl}?private_token=${config.gitee.token}`;
   }
 
   let response;
@@ -129,17 +129,17 @@ export async function checkGiteeRepoUpdate(repoInfo, env) {
 
 /**
  * 获取 Gitee API 限流信息
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象
  * @returns {Promise<Object>}
  */
-export async function getGiteeRateLimitInfo(env) {
+export async function getGiteeRateLimitInfo(config) {
   const requestHeaders = {
     'User-Agent': 'Gitee-Repo-Watcher-EdgeOne-Makers',
   };
 
   let requestUrl = 'https://gitee.com/api/v5/rate_limit';
-  if (env.GITEE_TOKEN) {
-    requestUrl = `${requestUrl}?private_token=${env.GITEE_TOKEN}`;
+  if (config?.gitee?.token) {
+    requestUrl = `${requestUrl}?private_token=${config.gitee.token}`;
   }
 
   try {

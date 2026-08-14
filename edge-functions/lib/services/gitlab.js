@@ -40,14 +40,14 @@ export function parseGitLabRepoList(repoStr, defaultBranch) {
 /**
  * 检测单个 GitLab 仓库是否有更新
  * @param {{owner: string, repo: string, branch: string}} repoInfo 仓库信息
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象
  * @returns {Promise<Object>}
  */
-export async function checkGitLabRepoUpdate(repoInfo, env) {
+export async function checkGitLabRepoUpdate(repoInfo, config) {
   const { owner, repo, branch } = repoInfo;
   const repoKey = `gitlab:${owner}/${repo}@${branch}`;
-  const apiBase = env.GITLAB_API_BASE || 'https://gitlab.com';
-  const gitlabHost = env.GITLAB_HOST || 'gitlab.com';
+  const apiBase = config?.gitlab?.apiBase || 'https://gitlab.com';
+  const gitlabHost = config?.gitlab?.host || 'gitlab.com';
   const repoUrl = `https://${gitlabHost}/${owner}/${repo}`;
 
   // URL 编码项目路径 (owner/repo -> owner%2Frepo)
@@ -60,8 +60,8 @@ export async function checkGitLabRepoUpdate(repoInfo, env) {
   };
 
   // GitLab 使用 PRIVATE-TOKEN header 认证
-  if (env.GITLAB_TOKEN) {
-    requestHeaders['PRIVATE-TOKEN'] = env.GITLAB_TOKEN;
+  if (config?.gitlab?.token) {
+    requestHeaders['PRIVATE-TOKEN'] = config.gitlab.token;
   }
 
   let response;
@@ -132,17 +132,17 @@ export async function checkGitLabRepoUpdate(repoInfo, env) {
 
 /**
  * 获取 GitLab API 限流信息
- * @param {Object} env 环境变量
+ * @param {Object} config 配置对象
  * @returns {Promise<Object>}
  */
-export async function getGitLabRateLimitInfo(env) {
-  const apiBase = env.GITLAB_API_BASE || 'https://gitlab.com';
+export async function getGitLabRateLimitInfo(config) {
+  const apiBase = config?.gitlab?.apiBase || 'https://gitlab.com';
   const requestHeaders = {
     'User-Agent': 'GitLab-Repo-Watcher-EdgeOne-Makers',
   };
 
-  if (env.GITLAB_TOKEN) {
-    requestHeaders['PRIVATE-TOKEN'] = env.GITLAB_TOKEN;
+  if (config?.gitlab?.token) {
+    requestHeaders['PRIVATE-TOKEN'] = config.gitlab.token;
   }
 
   try {

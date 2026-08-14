@@ -68,64 +68,34 @@
 3. 点击 **「申请开通」**（免费套餐包含 1GB 存储）。
 4. 点击 **「创建命名空间」**，输入名称（如 `repo-watcher-kv`）。
 5. 进入命名空间 → **「关联项目」** 标签页。
-6. 点击 **「绑定项目」**，选择你的项目，设置变量名为 `KV_DEFAULT`。
+6. 点击 **「绑定项目」**，选择你的项目，设置变量名为 `MY_KV`。
 7. 确认绑定成功。
 
-> ⚠️ **关键步骤**：变量名必须是 `KV_DEFAULT`，与代码中使用的全局变量名称一致。
+> ⚠️ **关键步骤**：变量名必须是 `MY_KV`，与代码中使用的全局变量名称一致。所有键统一加 `repo_watcher_` 前缀。
 
 ### 步骤三：配置环境变量
 
-在 EdgeOne Makers 控制台的 **「环境变量」** 设置中配置以下变量：
+在 EdgeOne Makers 控制台的 **「环境变量」** 设置中配置以下**受保护环境变量**（仅服务端，不进 KV）：
 
-#### 通用配置
+| 变量名 | 必填 | 说明 |
+|--------|------|------|
+| `JWT_SECRET` | **是** | JWT 双 Token 签名密钥，建议 32 位以上随机串 |
+| `CONFIG_ENC_KEY` | **是** | 凭据 AES-256-GCM 加密密钥（hex 64 位 或 任意字符串，会自动派生为 32 字节） |
 
-| 变量名 | 必填 | 说明 | 默认 |
-|--------|------|------|------|
-| `NOTIFY_ON_FIRST_CHECK` | 否 | 首次检测是否通知 | `false` |
-| `TZ` | 否 | 时区设置 | `UTC+8` |
-| `CHECK_TOKEN` | 否（建议设置） | 调用 `/api/check` 接口的访问令牌，用于定时检测鉴权。未设置则拒绝所有请求。支持 `Authorization: Bearer <token>` 请求头或 `token` 查询参数传入 | 无 |
+> 原业务配置（仓库列表、各平台 Token、通知渠道等）**不再通过环境变量配置**，改为在管理后台中设置并存储到 KV。
 
-#### GitHub 平台配置
+### 步骤四：初始化管理后台
 
-| 变量名 | 必填 | 说明 | 示例 |
-|--------|------|------|------|
-| `GITHUB_REPO` | 否 | 监控的 GitHub 仓库列表，支持逗号或换行分隔 | `facebook/react,vuejs/core` |
-| `GITHUB_BRANCH` | 否 | 默认分支名称 | `main` |
-| `GITHUB_TOKEN` | 否 | Personal Access Token（提高 API 限流配额） | `ghp_xxxxxxxxxxxx` |
+1. 部署完成后访问 `/admin`。
+2. 首次访问显示**初始化向导**，设置管理员用户名与密码（密码至少 6 位）。
+3. 初始化完成后，再次访问 `/admin` 显示登录页，使用刚设置的账号登录。
+4. 登录后进入 `/admin/console` 配置各平台仓库、Token 与通知渠道（凭据加密存储、界面脱敏）。
 
-#### Gitee 平台配置
+### 步骤三（旧）：原环境变量配置已废弃
 
-| 变量名 | 必填 | 说明 | 示例 |
-|--------|------|------|------|
-| `GITEE_REPO` | 否 | 监控的 Gitee 仓库列表 | `owner/repo1,owner/repo2` |
-| `GITEE_BRANCH` | 否 | 默认分支名称 | `master` |
-| `GITEE_TOKEN` | 否 | 私人令牌 | `your-gitee-token` |
-
-#### GitLab 平台配置
-
-| 变量名 | 必填 | 说明 | 示例 |
-|--------|------|------|------|
-| `GITLAB_REPO` | 否 | 监控的 GitLab 仓库列表 | `owner/repo1,owner/repo2` |
-| `GITLAB_BRANCH` | 否 | 默认分支名称 | `main` |
-| `GITLAB_TOKEN` | 否 | Private Access Token | `your-gitlab-token` |
-| `GITLAB_API_BASE` | 否 | API 基础地址（自托管 GitLab 时需配置） | `https://gitlab.example.com` |
-| `GITLAB_HOST` | 否 | 主机地址 | `gitlab.example.com` |
-
-#### CNB 平台配置
-
-| 变量名 | 必填 | 说明 | 示例 |
-|--------|------|------|------|
-| `CNB_REPO` | 否 | 监控的 CNB 仓库列表 | `owner/repo1,owner/repo2` |
-| `CNB_BRANCH` | 否 | 默认分支名称 | `main` |
-| `CNB_TOKEN` | **是** | API 认证 Token | `your-cnb-token` |
-| `CNB_API_BASE` | 否 | API 基础地址 | `https://api.cnb.cool` |
-
-#### 通知渠道配置
-
-| 变量名 | 必填 | 说明 | 示例 |
-|--------|------|------|------|
-| `MAGICPUSH_URL` | 否 | MagicPush API URL | `https://your-magicpush-api.com/notify` |
-| `MAGICPUSH_TOKEN` | 否 | MagicPush Bearer Token | `your-magicpush-token` |
+> ⚠️ 以下配置项**已迁移至管理后台（KV 存储）**，不再通过环境变量配置：
+> `NOTIFY_ON_FIRST_CHECK`、`TZ`、`CHECK_TOKEN`、`GITHUB_*`、`GITEE_*`、`GITLAB_*`、`CNB_*`、`MAGICPUSH_*`。
+> 部署后请在 `/admin/console` 中配置。仅 `JWT_SECRET` 与 `CONFIG_ENC_KEY` 保留为受保护环境变量。
 
 ## 🛠 使用方式
 
@@ -178,13 +148,21 @@ GET /api/repos
 }
 ```
 
-### 方式三：HTTP 请求触发
+### 方式三：管理后台（推荐）
+
+部署并初始化后，通过管理后台在线维护所有配置：
+
+- 访问 `/admin` 完成初始化 / 登录。
+- 访问 `/admin/console` 配置各平台仓库、分支、Token 及通知渠道；敏感字段在 KV 中以 AES-256-GCM 加密存储，界面脱敏显示，编辑时留空表示不修改。
+- 管理接口（`/api/admin/*`）使用 JWT 双 Token 鉴权，access token 15 分钟、refresh token 7 天，支持登出吊销。
+
+### 方式四：HTTP 请求触发
 
 **请求说明：**
 
 - 使用 `/api/check` 路径进行检测。
-- 使用 `/api/test-notify` 路径测试通知。
-- 若已配置 `CHECK_TOKEN`，调用时需携带令牌：通过请求头 `Authorization: Bearer <token>` 或查询参数 `?token=<token>` 传入，否则返回 401。
+- 通知测试改为在管理后台 `/admin/console` 点击「测试通知」（原公开 `/api/test-notify` 已下线）。
+- `CHECK_TOKEN` 在管理后台配置（存储于 KV 加密）。调用时需携带令牌：通过请求头 `Authorization: Bearer <token>` 或查询参数 `?token=<token>` 传入，否则返回 401。
 
 #### 检测所有仓库
 
@@ -240,7 +218,13 @@ repo-watcher/
 │   ├── api/                   # HTTP 接口
 │   │   ├── repos.js           # GET /api/repos 公开接口
 │   │   ├── check.js           # GET|POST /api/check 手动/定时检测
-│   │   └── test-notify.js     # GET /api/test-notify 通知测试
+│   │   └── admin/             # 管理后台接口（需鉴权）
+│   │       ├── init.js        # GET|POST /api/admin/init 初始化
+│   │       ├── login.js       # POST /api/admin/login 登录
+│   │       ├── refresh.js     # POST /api/admin/refresh 刷新
+│   │       ├── logout.js      # POST /api/admin/logout 登出
+│   │       ├── config.js      # GET|PUT /api/admin/config 配置读写
+│   │       └── test-notify.js # POST /api/admin/test-notify 通知测试
 │   └── lib/                   # 共享业务库
 │       ├── services/          # 服务层 (各平台 API + 通知)
 │       │   ├── index.js       # 服务统一导出 (barrel)
@@ -249,23 +233,38 @@ repo-watcher/
 │       │   ├── gitlab.js
 │       │   ├── cnb.js
 │       │   └── notify.js
-│       └── utils/             # 工具函数
-│           ├── index.js       # 工具统一导出 (barrel)
-│           ├── kv.js          # KV 存储操作 (全局变量模式)
-│           ├── parser.js      # 仓库字符串解析
-│           └── datetime.js    # 日期格式化
+│       ├── utils/             # 工具函数
+│       │   ├── index.js       # 工具统一导出 (barrel)
+│       │   ├── kv.js          # KV 存储操作 (MY_KV 全局变量 + 前缀)
+│       │   ├── crypto.js      # AES-256-GCM 凭据加解密
+│       │   ├── parser.js      # 仓库字符串解析
+│       │   └── datetime.js    # 日期格式化
+│       ├── config.js          # 配置读写层（解密/加密 + 脱敏）
+│       └── auth/              # 认证
+│           ├── jwt.js         # JWT 双 Token 签名/校验
+│           ├── admin.js       # 管理员哈希与会话
+│           └── middleware.js  # 鉴权中间件辅助
+├── cloud-functions/           # Cloud Functions (Node 运行时，与 edge 对齐)
+│   └── api/admin/             # 管理后台接口（复用 edge-functions/lib）
 ├── public/                    # 静态资源 (自动托管)
 │   └── favicon.svg            # 网站图标
 ├── src/                       # 前端仪表盘 (Vite + Vue)
 │   ├── components/            # Vue 组件
 │   │   ├── BrandIcon.vue
 │   │   ├── RepoCard.vue
-│   │   └── StatCard.vue
+│   │   ├── StatCard.vue
+│   │   ├── ConfigSection.vue  # 分组配置卡片
+│   │   └── TokenField.vue     # 敏感字段输入
 │   ├── composables/           # 组合式函数
-│   │   └── useRepos.js        # 仓库数据获取逻辑
+│   │   ├── useRepos.js        # 仓库数据获取逻辑
+│   │   └── useAdminAuth.js    # 管理后台鉴权
+│   ├── views/                 # 页面
+│   │   ├── AdminInit.vue      # 初始化向导
+│   │   ├── AdminLogin.vue     # 登录
+│   │   └── AdminConsole.vue   # 配置后台
 │   ├── utils/                 # 前端工具函数
 │   │   └── time.js            # 时间格式化
-│   ├── App.vue                # 根组件
+│   ├── App.vue                # 根组件（轻量页面切换）
 │   ├── main.js                # 入口文件
 │   └── style.css              # 全局样式
 ├── index.html                 # Vite 入口 HTML

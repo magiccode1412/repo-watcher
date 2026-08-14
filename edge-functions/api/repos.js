@@ -1,16 +1,16 @@
 /**
  * 公开 API: 获取仓库列表和状态
- * 
+ *
  * 访问路径: GET /api/repos
  * 无需鉴权，支持 CORS，供第三方应用集成
+ * 配置来源：KV（repo_watcher_config，自动解密）
  */
 
 import { parseRepoList, parseCnbRepoList, getRepoData } from '../lib/utils/index.js';
 import { parseGiteeRepoList, parseGitLabRepoList } from '../lib/services/index.js';
+import { getConfig } from '../lib/config.js';
 
 export async function onRequestGet(context) {
-  const { env } = context;
-  
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -19,10 +19,11 @@ export async function onRequestGet(context) {
   };
 
   try {
+    const config = await getConfig();
     const repos = [];
 
     // 获取 GitHub 仓库列表
-    const githubRepos = parseRepoList(env.GITHUB_REPO, env.GITHUB_BRANCH || 'main');
+    const githubRepos = parseRepoList(config.github?.repo, config.github?.branch || 'main');
     for (const repo of githubRepos) {
       const repoKey = `${repo.owner}/${repo.repo}@${repo.branch}`;
       const repoUrl = `https://github.com/${repo.owner}/${repo.repo}`;
@@ -42,8 +43,8 @@ export async function onRequestGet(context) {
     }
 
     // 获取 Gitee 仓库列表
-    if (env.GITEE_REPO) {
-      const giteeRepos = parseGiteeRepoList(env.GITEE_REPO, env.GITEE_BRANCH || 'master');
+    if (config.gitee?.repo) {
+      const giteeRepos = parseGiteeRepoList(config.gitee.repo, config.gitee.branch || 'master');
       for (const repo of giteeRepos) {
         const repoKey = `gitee:${repo.owner}/${repo.repo}@${repo.branch}`;
         const repoUrl = `https://gitee.com/${repo.owner}/${repo.repo}`;
@@ -66,9 +67,9 @@ export async function onRequestGet(context) {
     }
 
     // 获取 GitLab 仓库列表
-    if (env.GITLAB_REPO) {
-      const gitlabHost = env.GITLAB_HOST || 'gitlab.com';
-      const gitlabRepos = parseGitLabRepoList(env.GITLAB_REPO, env.GITLAB_BRANCH || 'main');
+    if (config.gitlab?.repo) {
+      const gitlabHost = config.gitlab.host || 'gitlab.com';
+      const gitlabRepos = parseGitLabRepoList(config.gitlab.repo, config.gitlab.branch || 'main');
       for (const repo of gitlabRepos) {
         const repoKey = `gitlab:${repo.owner}/${repo.repo}@${repo.branch}`;
         const repoUrl = `https://${gitlabHost}/${repo.owner}/${repo.repo}`;
@@ -91,8 +92,8 @@ export async function onRequestGet(context) {
     }
 
     // 获取 CNB 仓库列表
-    if (env.CNB_REPO) {
-      const cnbRepos = parseCnbRepoList(env.CNB_REPO, env.CNB_BRANCH || 'main');
+    if (config.cnb?.repo) {
+      const cnbRepos = parseCnbRepoList(config.cnb.repo, config.cnb.branch || 'main');
       for (const repo of cnbRepos) {
         const repoKey = `cnb:${repo.owner}/${repo.repo}@${repo.branch}`;
         const repoUrl = `https://cnb.cool/${repo.owner}/${repo.repo}`;
