@@ -82,6 +82,16 @@
 | `JWT_SECRET` | **是** | JWT 双 Token 签名密钥，建议 32 位以上随机串 |
 | `CONFIG_ENC_KEY` | **是** | 凭据 AES-256-GCM 加密密钥（hex 64 位 或 任意字符串，会自动派生为 32 字节） |
 
+生成这两个变量的值（请在本地执行，分别生成两个不同的值）：
+
+```bash
+# 分别生成两个不同的值
+JWT_SECRET=$(openssl rand -hex 32)
+CONFIG_ENC_KEY=$(openssl rand -hex 32)
+echo "JWT_SECRET=$JWT_SECRET"
+echo "CONFIG_ENC_KEY=$CONFIG_ENC_KEY"
+```
+
 > 原业务配置（仓库列表、各平台 Token、通知渠道等）**不再通过环境变量配置**，改为在管理后台中设置并存储到 KV。
 
 ### 步骤四：初始化管理后台
