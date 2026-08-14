@@ -122,6 +122,7 @@ import AdminInit from './views/AdminInit.vue'
 import AdminLogin from './views/AdminLogin.vue'
 import AdminConsole from './views/AdminConsole.vue'
 import { useRepos } from './composables/useRepos.js'
+import { useAdminAuth } from './composables/useAdminAuth.js'
 
 // 轻量页面切换（不引入路由库），基于 location.pathname
 const pathname = ref(location.pathname)
