@@ -29,7 +29,7 @@ function b64urlDecode(str) {
 }
 
 function getSecret() {
-  const s = JWT_SECRET;
+  const s = globalThis.JWT_SECRET;
   if (!s) throw new Error('服务端未配置 JWT_SECRET');
   return enc.encode(s);
 }

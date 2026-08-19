@@ -17,7 +17,7 @@ const IV_LENGTH = 12;       // 96 位 IV（GCM 推荐）
 const TAG_LENGTH = 16;      // 128 位认证标签
 
 function getKey() {
-  const key = CONFIG_ENC_KEY;
+  const key = globalThis.CONFIG_ENC_KEY;
   if (!key) {
     throw new Error('服务端未配置 CONFIG_ENC_KEY，无法加解密凭据');
   }

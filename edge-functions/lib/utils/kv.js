@@ -12,15 +12,14 @@
 // 所有 KV 存储键统一加上的前缀
 const KV_KEY_PREFIX = 'repo_watcher_';
 
-// MY_KV / my_kv 全局变量（EdgeOne Makers 控制台绑定 KV 命名空间，变量名大小写敏感）
-// 为避免模块加载阶段因变量名大小写不一致导致 ReferenceError，改为按需动态解析。
-// 兼容来源优先级：MY_KV（大写）> my_kv（小写）> globalThis > context.env（部分运行时）
+// EdgeOne Makers 控制台绑定 KV 命名空间后，变量以「全局变量」形式注入，
+// 变量名大小写敏感（官方示例与默认值均为小写 my_kv）。
+// 通过 globalThis 安全访问，避免直接引用裸标识符导致打包器「未定义外部符号」构建失败（返回 545）。
+// 兼容优先级：my_kv（小写，官方约定）> MY_KV（大写，旧约定）
 function getKV() {
-  if (typeof MY_KV !== 'undefined' && MY_KV) return MY_KV;
-  if (typeof my_kv !== 'undefined' && my_kv) return my_kv;
-  const g = typeof globalThis !== 'undefined' ? globalThis : {};
-  if (g.MY_KV) return g.MY_KV;
+  const g = (typeof globalThis !== 'undefined' && globalThis) ? globalThis : {};
   if (g.my_kv) return g.my_kv;
+  if (g.MY_KV) return g.MY_KV;
   return undefined;
 }
 

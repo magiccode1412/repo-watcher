@@ -114,7 +114,7 @@ async function performCheck(config, options = {}) {
  * 令牌来源优先级：KV 配置 config.checkToken > 环境变量 CHECK_TOKEN
  */
 function verifyToken(request, config, url) {
-  const token = config.checkToken || CHECK_TOKEN;
+  const token = config.checkToken || globalThis.CHECK_TOKEN;
   if (!token) {
     return { error: '服务端未配置 CHECK_TOKEN，请在管理后台或环境变量中设置访问令牌', status: 500 };
   }
