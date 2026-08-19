@@ -115,7 +115,7 @@ async function performCheck(config, options = {}) {
  */
 function verifyToken(request, config, url, env) {
   // EdgeOne 普通环境变量注入在 context.env（CHECK_TOKEN）
-  const token = config.checkToken || (env && env.CHECK_TOKEN) || globalThis.CHECK_TOKEN;
+  const token = config.checkToken || (env && (env.CHECK_TOKEN || env.check_token)) || globalThis.CHECK_TOKEN || globalThis.check_token;
   if (!token) {
     return { error: '服务端未配置 CHECK_TOKEN，请在管理后台或环境变量中设置访问令牌', status: 500 };
   }

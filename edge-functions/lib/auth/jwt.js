@@ -36,8 +36,14 @@ function b64urlDecode(str) {
 }
 
 function getSecret() {
-  // EdgeOne 普通环境变量注入在 context.env（JWT_SECRET），非全局变量
-  const s = (runtimeEnv && runtimeEnv.JWT_SECRET) || globalThis.JWT_SECRET;
+  // EdgeOne 普通环境变量注入在 context.env（JWT_SECRET），非全局变量。
+  // 兼容多种命名/位置，便于排查配置问题。
+  const env = runtimeEnv || globalThis;
+  const s =
+    (env && env.JWT_SECRET) ||
+    (env && env.jwt_secret) ||
+    globalThis.JWT_SECRET ||
+    globalThis.jwt_secret;
   if (!s) throw new Error('服务端未配置 JWT_SECRET');
   return enc.encode(s);
 }
@@ -103,12 +109,13 @@ export async function verifyToken(token) {
 /**
  * 生成双 Token
  * @param {string} username 管理员用户名
+ * @param {Object} [env] EdgeOne context.env（用于注入 JWT_SECRET 等环境变量）
  * @returns {Promise<{accessToken: string, refreshToken: string, jti: string}>}
  */
-export async function issueTokens(username) {
+export async function issueTokens(username, env) {
   const jti = genJti();
-  const accessToken = await signToken({ sub: username, type: 'access', jti }, 15 * 60);
-  const refreshToken = await signToken({ sub: username, type: 'refresh', jti }, 7 * 24 * 60 * 60);
+  const accessToken = await signToken({ sub: username, type: 'access', jti }, 15 * 60, env);
+  const refreshToken = await signToken({ sub: username, type: 'refresh', jti }, 7 * 24 * 60 * 60, env);
   return { accessToken, refreshToken, jti };
 }
 
