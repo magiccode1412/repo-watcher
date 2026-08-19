@@ -61,7 +61,7 @@ export async function getConfig() {
   for (const path of SENSITIVE_PATHS) {
     const val = getByPath(config, path);
     if (val && isEncrypted(val)) {
-      setByPath(config, path, decryptField(val));
+      setByPath(config, path, await decryptField(val));
     }
   }
   return config;
@@ -83,14 +83,14 @@ export async function saveConfig(input) {
       // 空值表示不修改，保留原存储值：从已读 current 拷回
       const original = getByPath(current, path);
       if (original) {
-        setByPath(merged, path, isEncrypted(original) ? original : encryptField(original));
+        setByPath(merged, path, isEncrypted(original) ? original : await encryptField(original));
       } else {
         setByPath(merged, path, '');
       }
       continue;
     }
     if (!isEncrypted(val)) {
-      setByPath(merged, path, encryptField(val));
+      setByPath(merged, path, await encryptField(val));
     }
   }
 
