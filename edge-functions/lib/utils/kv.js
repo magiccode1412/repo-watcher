@@ -68,6 +68,31 @@ export async function kvDelete(key) {
 }
 
 /**
+ * 列举指定前缀的 KV key（自动处理分页）。
+ * 返回的 key 为「原始 key」（不含 KV_KEY_PREFIX），可直接传给 kvDelete/kvGet 复用。
+ * @param {string} prefix 原始前缀，如 'session:'
+ * @returns {Promise<string[]>}
+ */
+export async function kvList(prefix) {
+  const kv = getKV();
+  if (!kv) throw new Error('KV not bound (MY_KV/my_kv undefined)');
+  const full = withPrefix(prefix);
+  const out = [];
+  let cursor;
+  do {
+    const result = await withTimeout(
+      kv.list({ prefix: full, cursor, limit: 1000 }),
+      'list'
+    );
+    for (const k of result.keys || []) {
+      out.push(k.name.startsWith(full) ? k.name.slice(full.length) : k.name);
+    }
+    cursor = result.cursor;
+  } while (!result.complete);
+  return out;
+}
+
+/**
  * 从KV读取仓库数据（兼容旧格式）
  * @param {string} key 存储键
  * @param {string} platform 平台类型 (github/gitee/gitlab/cnb)

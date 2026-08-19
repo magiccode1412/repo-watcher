@@ -6,7 +6,7 @@
  * - refresh token 的 jti 存于 repo_watcher_session:<jti>，登出/改密时删除即吊销
  */
 
-import { kvGetJSON, kvPutJSON, kvDelete } from '../utils/kv.js';
+import { kvGetJSON, kvPutJSON, kvDelete, kvList } from '../utils/kv.js';
 
 // 统一获取全局 crypto（EdgeOne/Workers 中以 globalThis.crypto 暴露）
 const crypto = globalThis.crypto;
@@ -81,6 +81,26 @@ export async function deleteSession(jti) {
 }
 
 export async function deleteAllSessions() {
-  // 简易实现：依赖 jti 删除粒度，登出/改密时逐个删除。
-  // 如需全量吊销，可额外维护 repo_watcher_sessions 列表；当前按 jti 粒度即可。
+  // 改密/全量登出时，删除 KV 中所有 session:<jti> 记录。
+  // requireAccess 会因此对所有 access token 返回 401（sessionExists 失败），实现全量吊销。
+  const keys = await kvList(SESSION_PREFIX);
+  await Promise.all(keys.map((k) => kvDelete(k)));
+}
+
+/**
+ * 修改管理员密码
+ * @param {string} oldPassword 原密码（明文）
+ * @param {string} newPassword 新密码（明文，至少 6 位）
+ */
+export async function changePassword(oldPassword, newPassword) {
+  const admin = await getAdmin();
+  if (!admin) throw new Error('管理员未初始化');
+  if (!(await verifyPassword(oldPassword, admin.hash))) {
+    throw new Error('原密码错误');
+  }
+  if (typeof newPassword !== 'string' || newPassword.length < 6) {
+    throw new Error('新密码至少 6 位');
+  }
+  const hash = await hashPassword(newPassword);
+  await kvPutJSON(ADMIN_KEY, { ...admin, hash, updatedAt: new Date().toISOString() });
 }

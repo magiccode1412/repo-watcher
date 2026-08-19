@@ -138,6 +138,35 @@
         </div>
       </div>
     </ConfigSection>
+
+    <ConfigSection title="账户安全" icon="">
+      <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
+        修改密码后，所有已登录设备将被强制退出，需重新登录。
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">原密码</label>
+          <input type="password" v-model="oldPwd" autocomplete="current-password"
+            class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">新密码（至少 6 位）</label>
+          <input type="password" v-model="newPwd" autocomplete="new-password"
+            class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">确认新密码</label>
+          <input type="password" v-model="confirmPwd" autocomplete="new-password"
+            class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="md:col-span-2">
+          <button @click="changePassword" :disabled="savingPwd"
+            class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors text-sm disabled:opacity-50">
+            {{ savingPwd ? '修改中...' : '修改密码' }}
+          </button>
+        </div>
+      </div>
+    </ConfigSection>
   </div>
 </template>
 
@@ -167,6 +196,12 @@ const masked = reactive({
 const saving = ref(false)
 const message = ref('')
 const messageType = ref('info')
+
+// 修改密码
+const oldPwd = ref('')
+const newPwd = ref('')
+const confirmPwd = ref('')
+const savingPwd = ref(false)
 
 function clearEmpty(obj) {
   // 提交时不发送空 token（空表示不修改）
@@ -247,6 +282,45 @@ async function testNotify() {
 async function doLogout() {
   await logout()
   location.href = '/admin'
+}
+
+async function changePassword() {
+  message.value = ''
+  if (!oldPwd.value || !newPwd.value || !confirmPwd.value) {
+    message.value = '请填写完整'
+    messageType.value = 'error'
+    return
+  }
+  if (newPwd.value !== confirmPwd.value) {
+    message.value = '两次新密码不一致'
+    messageType.value = 'error'
+    return
+  }
+  if (newPwd.value.length < 6) {
+    message.value = '新密码至少 6 位'
+    messageType.value = 'error'
+    return
+  }
+  savingPwd.value = true
+  try {
+    const res = await authFetch('/api/admin/password', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldPassword: oldPwd.value, newPassword: newPwd.value })
+    })
+    const data = await res.json()
+    if (!res.ok) { message.value = data.message; messageType.value = 'error'; return }
+    message.value = data.message
+    messageType.value = 'success'
+    // 改密后所有会话已吊销，清除本地 token 并跳转重新登录
+    await logout()
+    location.href = '/admin'
+  } catch (e) {
+    message.value = e.message
+    messageType.value = 'error'
+  } finally {
+    savingPwd.value = false
+  }
 }
 
 onMounted(load)
