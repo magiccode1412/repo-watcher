@@ -7,6 +7,9 @@
  * 签名密钥：受保护环境变量 JWT_SECRET（仅服务端，不进 KV、不暴露 UI）。
  */
 
+// 统一获取全局 crypto（EdgeOne/Workers 中以 globalThis.crypto 暴露，兜底避免运行时未定义）
+const crypto = globalThis.crypto;
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 

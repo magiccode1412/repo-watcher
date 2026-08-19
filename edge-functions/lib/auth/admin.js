@@ -8,6 +8,9 @@
 
 import { kvGetJSON, kvPutJSON, kvDelete } from '../utils/kv.js';
 
+// 统一获取全局 crypto（EdgeOne/Workers 中以 globalThis.crypto 暴露）
+const crypto = globalThis.crypto;
+
 const ADMIN_KEY = 'admin';
 const SESSION_PREFIX = 'session:';
 

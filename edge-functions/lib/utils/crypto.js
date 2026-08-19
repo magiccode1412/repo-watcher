@@ -9,6 +9,9 @@
  * 因此使用 Web Crypto API（crypto.subtle）与原生 Uint8Array 实现。
  */
 
+// 统一获取全局 crypto（EdgeOne/Workers 中以 globalThis.crypto 暴露）
+const crypto = globalThis.crypto;
+
 const ALGORITHM = 'AES-GCM';
 const IV_LENGTH = 12;       // 96 位 IV（GCM 推荐）
 const TAG_LENGTH = 16;      // 128 位认证标签

@@ -34,3 +34,14 @@ export async function onRequestPost(context) {
     data: { accessToken, refreshToken, username }
   });
 }
+
+export async function onRequest(context) {
+  try {
+    const method = (context.request.method || 'GET').toUpperCase();
+    if (method === 'POST') return await onRequestPost(context);
+    return json({ code: 405, message: '方法不允许' }, 405);
+  } catch (e) {
+    // 未捕获异常统一返回 500，避免边缘网关返回私有码（如 545）掩盖真实错误
+    return json({ code: 500, message: '服务器内部错误', detail: e.message }, 500);
+  }
+}
