@@ -10,6 +10,13 @@
 // 统一获取全局 crypto（EdgeOne/Workers 中以 globalThis.crypto 暴露，兜底避免运行时未定义）
 const crypto = globalThis.crypto;
 
+// EdgeOne 普通环境变量（JWT_SECRET 等）注入在 context.env，非全局变量。
+// 由入口函数通过 initEnv(env) 注入，工具函数按需读取。
+let runtimeEnv = null;
+export function initEnv(env) {
+  if (env) runtimeEnv = env;
+}
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -29,7 +36,8 @@ function b64urlDecode(str) {
 }
 
 function getSecret() {
-  const s = globalThis.JWT_SECRET;
+  // EdgeOne 普通环境变量注入在 context.env（JWT_SECRET），非全局变量
+  const s = (runtimeEnv && runtimeEnv.JWT_SECRET) || globalThis.JWT_SECRET;
   if (!s) throw new Error('服务端未配置 JWT_SECRET');
   return enc.encode(s);
 }
@@ -57,7 +65,8 @@ function genJti() {
 /**
  * 签发 token
  */
-export async function signToken(payload, expiresInSeconds) {
+export async function signToken(payload, expiresInSeconds, env) {
+  if (env) initEnv(env);
   const now = Math.floor(Date.now() / 1000);
   const body = { ...payload, iat: now, exp: now + expiresInSeconds };
   const header = { alg: 'HS256', typ: 'JWT' };

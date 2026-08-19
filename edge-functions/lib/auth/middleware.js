@@ -2,14 +2,17 @@
  * 鉴权中间件辅助函数
  */
 
-import { verifyToken, extractBearer } from './jwt.js';
+import { verifyToken, extractBearer, initEnv } from './jwt.js';
 import { sessionExists } from './admin.js';
 
 /**
  * 校验 access token，要求 type === 'access' 且 jti 会话存在
+ * @param {Request} request
+ * @param {Object} [env] EdgeOne context.env（用于注入 JWT_SECRET 等环境变量）
  * @returns {Promise<{ok: boolean, status?: number, message?: string, payload?: Object}>}
  */
-export async function requireAccess(request) {
+export async function requireAccess(request, env) {
+  if (env) initEnv(env);
   const token = extractBearer(request);
   if (!token) return { ok: false, status: 401, message: '缺少访问令牌' };
   try {
@@ -25,7 +28,8 @@ export async function requireAccess(request) {
 /**
  * 校验 refresh token，要求 type === 'refresh'
  */
-export async function requireRefresh(request) {
+export async function requireRefresh(request, env) {
+  if (env) initEnv(env);
   const token = extractBearer(request);
   if (!token) return { ok: false, status: 401, message: '缺少刷新令牌' };
   try {

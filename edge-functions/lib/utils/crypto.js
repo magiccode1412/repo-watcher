@@ -13,11 +13,18 @@
 const crypto = globalThis.crypto;
 
 const ALGORITHM = 'AES-GCM';
+
+// EdgeOne 普通环境变量（CONFIG_ENC_KEY 等）注入在 context.env，非全局变量。
+// 由入口函数通过 initEnv(env) 注入，工具函数按需读取。
+let runtimeEnv = null;
+export function initEnv(env) {
+  if (env) runtimeEnv = env;
+}
 const IV_LENGTH = 12;       // 96 位 IV（GCM 推荐）
 const TAG_LENGTH = 16;      // 128 位认证标签
 
 function getKey() {
-  const key = globalThis.CONFIG_ENC_KEY;
+  const key = (runtimeEnv && runtimeEnv.CONFIG_ENC_KEY) || globalThis.CONFIG_ENC_KEY;
   if (!key) {
     throw new Error('服务端未配置 CONFIG_ENC_KEY，无法加解密凭据');
   }

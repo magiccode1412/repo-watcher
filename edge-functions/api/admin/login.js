@@ -26,7 +26,7 @@ export async function onRequestPost(context) {
       return json({ code: 401, message: '用户名或密码错误' }, 401);
     }
 
-    const { accessToken, refreshToken, jti } = await issueTokens(username);
+    const { accessToken, refreshToken, jti } = await issueTokens(username, context.env);
     await saveSession(jti);
 
     return json({

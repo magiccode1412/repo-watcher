@@ -7,7 +7,7 @@
  */
 
 import { kvGetJSON, kvPutJSON } from './utils/kv.js';
-import { encryptField, decryptField, isEncrypted } from './utils/crypto.js';
+import { encryptField, decryptField, isEncrypted, initEnv as initCryptoEnv } from './utils/crypto.js';
 
 const CONFIG_KEY = 'config';
 
@@ -54,7 +54,8 @@ function defaultConfig() {
  * 读取配置并解密敏感字段
  * @returns {Promise<Object>} 明文配置
  */
-export async function getConfig() {
+export async function getConfig(env) {
+  if (env) initCryptoEnv(env);
   const stored = await kvGetJSON(CONFIG_KEY);
   const config = { ...defaultConfig(), ...(stored || {}) };
 
@@ -72,8 +73,9 @@ export async function getConfig() {
  * @param {Object} input 用户提交的部分/整体配置
  * @returns {Promise<Object>} 保存后的明文配置
  */
-export async function saveConfig(input) {
-  const current = await getConfig();
+export async function saveConfig(input, env) {
+  if (env) initCryptoEnv(env);
+  const current = await getConfig(env);
   const merged = deepMerge(current, input || {});
 
   // 加密敏感字段
@@ -101,8 +103,8 @@ export async function saveConfig(input) {
 /**
  * 返回脱敏配置（敏感字段掩码）
  */
-export async function getMaskedConfig() {
-  const config = await getConfig();
+export async function getMaskedConfig(env) {
+  const config = await getConfig(env);
   const masked = JSON.parse(JSON.stringify(config));
   for (const path of SENSITIVE_PATHS) {
     const val = getByPath(masked, path);

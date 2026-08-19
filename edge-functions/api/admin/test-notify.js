@@ -10,10 +10,10 @@ import { json } from '../../lib/auth/middleware.js';
 
 export async function onRequestPost(context) {
   const { request } = context;
-  const auth = await requireAccess(request);
+  const auth = await requireAccess(request, context.env);
   if (!auth.ok) return json({ code: auth.status, message: auth.message }, auth.status);
 
-  const config = await getConfig();
+  const config = await getConfig(context.env);
   const results = [];
 
   const mockResult = {

@@ -113,8 +113,9 @@ async function performCheck(config, options = {}) {
  * 验证访问令牌
  * 令牌来源优先级：KV 配置 config.checkToken > 环境变量 CHECK_TOKEN
  */
-function verifyToken(request, config, url) {
-  const token = config.checkToken || globalThis.CHECK_TOKEN;
+function verifyToken(request, config, url, env) {
+  // EdgeOne 普通环境变量注入在 context.env（CHECK_TOKEN）
+  const token = config.checkToken || (env && env.CHECK_TOKEN) || globalThis.CHECK_TOKEN;
   if (!token) {
     return { error: '服务端未配置 CHECK_TOKEN，请在管理后台或环境变量中设置访问令牌', status: 500 };
   }
@@ -139,10 +140,10 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
 
-  const config = await getConfig();
+  const config = await getConfig(context.env);
 
   // 验证访问令牌
-  const tokenError = verifyToken(request, config, url);
+  const tokenError = verifyToken(request, config, url, context.env);
   if (tokenError) {
     return new Response(JSON.stringify({ code: tokenError.status, message: tokenError.error }), {
       status: tokenError.status,
@@ -189,10 +190,10 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   const url = new URL(request.url);
 
-  const config = await getConfig();
+  const config = await getConfig(context.env);
 
   // 验证访问令牌
-  const tokenError = verifyToken(request, config, url);
+  const tokenError = verifyToken(request, config, url, context.env);
   if (tokenError) {
     return new Response(JSON.stringify({
       code: tokenError.status,

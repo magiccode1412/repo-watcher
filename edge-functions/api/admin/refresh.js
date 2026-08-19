@@ -11,7 +11,7 @@ import { json } from '../../lib/auth/middleware.js';
 export async function onRequestPost(context) {
   const { request } = context;
 
-  const auth = await requireRefresh(request);
+  const auth = await requireRefresh(request, context.env);
   if (!auth.ok) return json({ code: auth.status, message: auth.message }, auth.status);
 
   // refresh 会话需有效
@@ -21,7 +21,8 @@ export async function onRequestPost(context) {
 
   const accessToken = await signToken(
     { sub: auth.payload.sub, type: 'access', jti: auth.payload.jti },
-    15 * 60
+    15 * 60,
+    context.env
   );
 
   return json({ code: 200, message: '刷新成功', data: { accessToken } });
