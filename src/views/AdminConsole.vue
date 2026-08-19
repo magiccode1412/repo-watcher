@@ -3,7 +3,7 @@
     <header class="flex items-center justify-between mb-8">
       <div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">配置后台</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm">欢迎，{{ username }}</p>
+        <a href="/" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">← 返回首页</a>
       </div>
       <div class="flex items-center gap-3">
         <button @click="testNotify" :disabled="saving"
@@ -26,7 +26,17 @@
       {{ message }}
     </p>
 
-    <ConfigSection title="GitHub" icon="github">
+    <nav class="flex flex-wrap gap-2 mb-6">
+      <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
+        class="px-4 py-2 rounded-lg text-sm transition-colors"
+        :class="activeTab === t.key
+          ? 'bg-blue-600 text-white'
+          : 'bg-white/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'">
+        {{ t.label }}
+      </button>
+    </nav>
+
+    <ConfigSection title="GitHub" icon="github" v-if="activeTab === 'github'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">仓库列表（逗号/换行分隔）</label>
@@ -44,7 +54,7 @@
       </div>
     </ConfigSection>
 
-    <ConfigSection title="Gitee" icon="gitee">
+    <ConfigSection title="Gitee" icon="gitee" v-if="activeTab === 'gitee'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">仓库列表</label>
@@ -62,7 +72,7 @@
       </div>
     </ConfigSection>
 
-    <ConfigSection title="GitLab" icon="gitlab">
+    <ConfigSection title="GitLab" icon="gitlab" v-if="activeTab === 'gitlab'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">仓库列表</label>
@@ -90,7 +100,7 @@
       </div>
     </ConfigSection>
 
-    <ConfigSection title="CNB" icon="cnb">
+    <ConfigSection title="CNB" icon="cnb" v-if="activeTab === 'cnb'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">仓库列表</label>
@@ -113,7 +123,7 @@
       </div>
     </ConfigSection>
 
-    <ConfigSection title="通知与其它" icon="">
+    <ConfigSection title="通知与其它" icon="" v-if="activeTab === 'notify'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">时区（如 UTC+8）</label>
@@ -139,7 +149,7 @@
       </div>
     </ConfigSection>
 
-    <ConfigSection title="账户安全" icon="">
+    <ConfigSection title="账户安全" icon="" v-if="activeTab === 'security'">
       <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
         修改密码后，所有已登录设备将被强制退出，需重新登录。
       </p>
@@ -176,7 +186,18 @@ import ConfigSection from '../components/ConfigSection.vue'
 import TokenField from '../components/TokenField.vue'
 import { useAdminAuth } from '../composables/useAdminAuth.js'
 
-const { authFetch, apiUrl, username, logout } = useAdminAuth()
+const { authFetch, apiUrl, logout } = useAdminAuth()
+
+// 选项卡：点击切换对应配置区块（表单数据由共享的 cfg 维护，切换不丢数据）
+const tabs = [
+  { key: 'github', label: 'GitHub' },
+  { key: 'gitee', label: 'Gitee' },
+  { key: 'gitlab', label: 'GitLab' },
+  { key: 'cnb', label: 'CNB' },
+  { key: 'notify', label: '通知与其它' },
+  { key: 'security', label: '账户安全' },
+]
+const activeTab = ref('github')
 
 const cfg = reactive({
   github: { repo: '', branch: 'main', token: '' },
