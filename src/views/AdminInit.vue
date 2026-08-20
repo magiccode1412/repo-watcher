@@ -48,6 +48,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAdminAuth } from '../composables/useAdminAuth.js'
+import router from '../router'
 
 const { apiUrl, setTokens } = useAdminAuth()
 const user = ref('admin')
@@ -79,9 +80,9 @@ async function submit() {
     const loginData = await loginRes.json()
     if (loginRes.ok) {
       setTokens(loginData.data.accessToken, loginData.data.refreshToken, loginData.data.username)
-      location.href = '/admin/console'
+      router.push('/admin/console')
     } else {
-      location.href = '/admin'
+      router.push('/admin')
     }
   } catch (e) {
     error.value = e.message

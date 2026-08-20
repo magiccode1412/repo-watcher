@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import router from '../router'
 
 /**
  * 管理后台鉴权组合式函数
@@ -62,8 +63,8 @@ async function authFetch(path, options = {}) {
 
   if (res.status === 401) {
     clearTokens()
-    if (location.pathname.startsWith('/admin')) {
-      location.href = '/admin'
+    if (router.currentRoute.value.path.startsWith('/admin')) {
+      router.push('/admin')
     }
     throw new Error('未登录或会话已失效')
   }

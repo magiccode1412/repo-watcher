@@ -34,7 +34,7 @@
       </form>
 
       <div class="mt-4 text-center">
-        <a href="/" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">返回仪表盘</a>
+        <RouterLink to="/" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">返回仪表盘</RouterLink>
       </div>
     </div>
   </div>
@@ -42,7 +42,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useAdminAuth } from '../composables/useAdminAuth.js'
+import router from '../router'
 
 const { login } = useAdminAuth()
 const user = ref('')
@@ -55,7 +57,7 @@ async function submit() {
   loading.value = true
   try {
     await login(user.value, pass.value)
-    location.href = '/admin/console'
+    router.push('/admin/console')
   } catch (e) {
     error.value = e.message
   } finally {

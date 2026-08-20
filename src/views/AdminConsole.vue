@@ -3,7 +3,7 @@
     <header class="flex items-center justify-between mb-8">
       <div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">配置后台</h1>
-        <a href="/" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">← 返回首页</a>
+        <RouterLink to="/" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">← 返回首页</RouterLink>
       </div>
       <div class="flex items-center gap-3">
         <button @click="testNotify" :disabled="saving"
@@ -182,9 +182,11 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import ConfigSection from '../components/ConfigSection.vue'
 import TokenField from '../components/TokenField.vue'
 import { useAdminAuth } from '../composables/useAdminAuth.js'
+import router from '../router'
 
 const { authFetch, apiUrl, logout } = useAdminAuth()
 
@@ -302,7 +304,7 @@ async function testNotify() {
 
 async function doLogout() {
   await logout()
-  location.href = '/admin'
+  router.push('/admin')
 }
 
 async function changePassword() {
@@ -335,7 +337,7 @@ async function changePassword() {
     messageType.value = 'success'
     // 改密后所有会话已吊销，清除本地 token 并跳转重新登录
     await logout()
-    location.href = '/admin'
+    router.push('/admin')
   } catch (e) {
     message.value = e.message
     messageType.value = 'error'
