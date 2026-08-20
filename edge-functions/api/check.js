@@ -14,7 +14,7 @@
  */
 
 import { parseRepoString, normalizeRepos } from '../lib/utils/index.js';
-import { checkRepoUpdate, checkGiteeRepoUpdate, parseGiteeRepoString, parseGiteeRepoList, checkGitLabRepoUpdate, parseGitLabRepoString, parseGitLabRepoList, checkCnbBuildUpdate, getRateLimitInfo, notify } from '../lib/services/index.js';
+import { checkRepoUpdate, checkGiteeRepoUpdate, parseGiteeRepoString, checkGitLabRepoUpdate, parseGitLabRepoString, checkCnbBuildUpdate, getRateLimitInfo, notify } from '../lib/services/index.js';
 import { getConfig } from '../lib/config.js';
 
 // 核心检测逻辑
@@ -33,7 +33,7 @@ async function performCheck(config, options = {}) {
         return { error: '仓库格式错误，正确格式：owner/repo 或 owner/repo@branch', status: 400 };
       }
     } else if (!targetRepo) {
-      const repos = normalizeRepos(config.github?.repos || config.github?.repo, config.github?.branch || 'main');
+      const repos = normalizeRepos(config.github?.repos, config.github?.branch || 'main');
       for (const repo of repos) {
         results.push(await checkRepoUpdate(repo, config));
       }
@@ -42,7 +42,7 @@ async function performCheck(config, options = {}) {
 
   // Gitee 仓库检测
   if (platform === 'all' || platform === 'gitee') {
-    const giteeRepos = normalizeRepos(config.gitee?.repos || config.gitee?.repo, config.gitee?.branch || 'master');
+    const giteeRepos = normalizeRepos(config.gitee?.repos, config.gitee?.branch || 'master');
     if (giteeRepos.length) {
       if (targetRepo && platform === 'gitee') {
         const repoInfo = parseGiteeRepoString(targetRepo, config.gitee.branch || 'master');
@@ -61,7 +61,7 @@ async function performCheck(config, options = {}) {
 
   // GitLab 仓库检测
   if (platform === 'all' || platform === 'gitlab') {
-    const gitlabRepos = normalizeRepos(config.gitlab?.repos || config.gitlab?.repo, config.gitlab?.branch || 'main');
+    const gitlabRepos = normalizeRepos(config.gitlab?.repos, config.gitlab?.branch || 'main');
     if (gitlabRepos.length) {
       if (targetRepo && platform === 'gitlab') {
         const repoInfo = parseGitLabRepoString(targetRepo, config.gitlab.branch || 'main');
@@ -80,7 +80,7 @@ async function performCheck(config, options = {}) {
 
   // CNB 仓库检测
   if (platform === 'all' || platform === 'cnb') {
-    const cnbRepos = normalizeRepos(config.cnb?.repos || config.cnb?.repo, config.cnb.branch || 'main');
+    const cnbRepos = normalizeRepos(config.cnb?.repos, config.cnb.branch || 'main');
     if (cnbRepos.length) {
       if (targetRepo && platform === 'cnb') {
         const repoInfo = parseCnbRepoString(targetRepo, config.cnb.branch || 'main');

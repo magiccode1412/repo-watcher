@@ -1,14 +1,23 @@
 <template>
   <div>
-    <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">
-      {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
-    </label>
+    <div class="flex items-center justify-between mb-1">
+      <label class="block text-sm text-slate-500 dark:text-slate-400">
+        {{ label }}
+        <span v-if="required" class="text-red-500">*</span>
+      </label>
+      <span class="text-xs px-2 py-0.5 rounded-full"
+        :class="configured
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'">
+        {{ configured ? '● 已配置' : '○ 未配置' }}
+      </span>
+    </div>
     <div class="relative">
       <input
         :type="show ? 'text' : 'password'"
         :value="modelValue"
         :placeholder="placeholder"
+        autocomplete="new-password"
         @input="$emit('update:modelValue', $event.target.value)"
         class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
@@ -20,7 +29,7 @@
         {{ show ? '隐藏' : '显示' }}
       </button>
     </div>
-    <p v-if="maskHint" class="text-xs text-slate-400 mt-1">{{ maskHint }}</p>
+    <p class="text-xs text-slate-400 mt-1">{{ hint }}</p>
   </div>
 </template>
 
@@ -32,12 +41,12 @@ const props = defineProps({
   label: { type: String, required: true },
   required: { type: Boolean, default: false },
   placeholder: { type: String, default: '留空表示不修改' },
-  masked: { type: String, default: '' }, // 后端返回的掩码值
+  configured: { type: Boolean, default: false }, // 是否已配置（状态，不含值）
 })
 defineEmits(['update:modelValue'])
 
 const show = ref(false)
-const maskHint = computed(() =>
-  props.masked && props.masked.includes('•') ? '当前已配置（已脱敏），留空则不修改' : ''
+const hint = computed(() =>
+  props.configured ? '当前已配置，留空则不修改' : '尚未配置，填写后将保存'
 )
 </script>

@@ -39,10 +39,10 @@ function setByPath(obj, path, value) {
 
 function defaultConfig() {
   return {
-    github: { repo: '', branch: 'main', token: '' },
-    gitee: { repo: '', branch: 'master', token: '' },
-    gitlab: { repo: '', branch: 'main', token: '', apiBase: 'https://gitlab.com', host: 'gitlab.com' },
-    cnb: { repo: '', branch: 'main', token: '', apiBase: 'https://api.cnb.cool' },
+    github: { repos: [], branch: 'main', token: '' },
+    gitee: { repos: [], branch: 'master', token: '' },
+    gitlab: { repos: [], branch: 'main', token: '', apiBase: 'https://gitlab.com', host: 'gitlab.com' },
+    cnb: { repos: [], branch: 'main', token: '', apiBase: 'https://api.cnb.cool' },
     notifyOnFirstCheck: false,
     tz: 'UTC+8',
     checkToken: '',
@@ -78,6 +78,13 @@ export async function saveConfig(input, env) {
   const current = await getConfig(env);
   const merged = deepMerge(current, input || {});
 
+  // 清理：移除已废弃的旧版 repo 字符串字段（仅保留结构化 repos 数组）
+  for (const k of ['github', 'gitee', 'gitlab', 'cnb']) {
+    if (merged[k] && 'repo' in merged[k]) {
+      delete merged[k].repo;
+    }
+  }
+
   // 加密敏感字段
   for (const path of SENSITIVE_PATHS) {
     const val = getByPath(merged, path);
@@ -101,16 +108,35 @@ export async function saveConfig(input, env) {
 }
 
 /**
- * 返回脱敏配置（敏感字段掩码）
+ * 返回安全配置：敏感字段一律置空，绝不回传任何明文或脱敏字符
  */
 export async function getMaskedConfig(env) {
   const config = await getConfig(env);
-  const masked = JSON.parse(JSON.stringify(config));
+  const blanked = JSON.parse(JSON.stringify(config));
   for (const path of SENSITIVE_PATHS) {
-    const val = getByPath(masked, path);
-    if (val) setByPath(masked, path, '••••••');
+    const val = getByPath(blanked, path);
+    if (val) setByPath(blanked, path, '');
   }
-  return masked;
+  return blanked;
+}
+
+/**
+ * 返回敏感字段是否已配置的状态（仅布尔，不含任何密钥信息）
+ */
+export async function getSecretStatus(env) {
+  const config = await getConfig(env);
+  const status = {};
+  for (const path of SENSITIVE_PATHS) {
+    const val = getByPath(config, path);
+    const keys = path.split('.');
+    if (keys.length === 2) {
+      status[keys[0]] = status[keys[0]] || {};
+      status[keys[0]][keys[1]] = !!val;
+    } else {
+      status[keys[0]] = !!val;
+    }
+  }
+  return status;
 }
 
 function deepMerge(base, override) {

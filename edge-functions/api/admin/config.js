@@ -5,7 +5,7 @@
  */
 
 import { requireAccess } from '../../lib/auth/middleware.js';
-import { getMaskedConfig, saveConfig } from '../../lib/config.js';
+import { getMaskedConfig, getSecretStatus, saveConfig } from '../../lib/config.js';
 import { json } from '../../lib/auth/middleware.js';
 
 export async function onRequestGet(context) {
@@ -14,7 +14,8 @@ export async function onRequestGet(context) {
   if (!auth.ok) return json({ code: auth.status, message: auth.message }, auth.status);
 
   const config = await getMaskedConfig(context.env);
-  return json({ code: 200, message: '获取成功', data: config });
+  const secrets = await getSecretStatus(context.env);
+  return json({ code: 200, message: '获取成功', data: config, secrets });
 }
 
 export async function onRequestPut(context) {
@@ -30,6 +31,7 @@ export async function onRequestPut(context) {
   }
 
   await saveConfig(body, context.env);
-  const masked = await getMaskedConfig();
-  return json({ code: 200, message: '保存成功', data: masked });
+  const config = await getMaskedConfig(context.env);
+  const secrets = await getSecretStatus(context.env);
+  return json({ code: 200, message: '保存成功', data: config, secrets });
 }

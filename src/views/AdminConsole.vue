@@ -1,9 +1,9 @@
 <template>
   <div class="max-w-4xl mx-auto">
     <header class="flex items-center justify-between mb-8">
-      <div>
+      <div class="flex items-center gap-4">
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">配置后台</h1>
-        <RouterLink to="/" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">← 返回首页</RouterLink>
+        <RouterLink to="/" class="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap">← 返回首页</RouterLink>
       </div>
       <div class="flex items-center gap-3">
         <button @click="testNotify" :disabled="saving"
@@ -47,7 +47,7 @@
             class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div class="md:col-span-2">
-          <TokenField v-model="cfg.github.token" label="Token" :masked="masked.github.token" />
+          <TokenField v-model="cfg.github.token" label="Token" :configured="secrets.github.token" />
         </div>
       </div>
     </ConfigSection>
@@ -63,7 +63,7 @@
             class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div class="md:col-span-2">
-          <TokenField v-model="cfg.gitee.token" label="Token" :masked="masked.gitee.token" />
+          <TokenField v-model="cfg.gitee.token" label="Token" :configured="secrets.gitee.token" />
         </div>
       </div>
     </ConfigSection>
@@ -89,7 +89,7 @@
             class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div class="md:col-span-2">
-          <TokenField v-model="cfg.gitlab.token" label="Token" :masked="masked.gitlab.token" />
+          <TokenField v-model="cfg.gitlab.token" label="Token" :configured="secrets.gitlab.token" />
         </div>
       </div>
     </ConfigSection>
@@ -110,7 +110,7 @@
             class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div class="md:col-span-2">
-          <TokenField v-model="cfg.cnb.token" label="Token" :masked="masked.cnb.token" required />
+          <TokenField v-model="cfg.cnb.token" label="Token" :configured="secrets.cnb.token" required />
         </div>
       </div>
     </ConfigSection>
@@ -129,13 +129,13 @@
           </label>
         </div>
         <div class="md:col-span-2">
-          <TokenField v-model="cfg.checkToken" label="检测令牌 CHECK_TOKEN" :masked="masked.checkToken" />
+          <TokenField v-model="cfg.checkToken" label="检测令牌 CHECK_TOKEN" :configured="secrets.checkToken" />
         </div>
         <div class="md:col-span-2 border-t border-slate-200 dark:border-slate-700 pt-4">
           <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">MagicPush 通知</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TokenField v-model="cfg.magicpush.url" label="URL" :masked="masked.magicpush.url" />
-            <TokenField v-model="cfg.magicpush.token" label="Token" :masked="masked.magicpush.token" />
+            <TokenField v-model="cfg.magicpush.url" label="URL" :configured="secrets.magicpush.url" />
+            <TokenField v-model="cfg.magicpush.token" label="Token" :configured="secrets.magicpush.token" />
           </div>
         </div>
       </div>
@@ -204,9 +204,9 @@ const cfg = reactive({
   checkToken: '',
   magicpush: { url: '', token: '' },
 })
-const masked = reactive({
-  github: { token: '' }, gitee: { token: '' }, gitlab: { token: '' }, cnb: { token: '' },
-  checkToken: '', magicpush: { url: '', token: '' },
+const secrets = reactive({
+  github: { token: false }, gitee: { token: false }, gitlab: { token: false }, cnb: { token: false },
+  checkToken: false, magicpush: { url: false, token: false },
 })
 
 const saving = ref(false)
@@ -244,48 +244,32 @@ async function load() {
     const res = await authFetch('/api/admin/config')
     const data = await res.json()
     if (!res.ok) { message.value = data.message; messageType.value = 'error'; return }
-    mergeConfig(data.data)
+    mergeConfig(data.data, data.secrets)
   } catch (e) {
     message.value = e.message
     messageType.value = 'error'
   }
 }
 
-function mergeConfig(d) {
+function mergeConfig(d, sec) {
   if (!d) return
   for (const k of ['github', 'gitee', 'gitlab', 'cnb']) {
     if (!d[k]) continue
     Object.assign(cfg[k], d[k])
-    // 优先使用结构化 repos 数组；否则兼容旧版 repo 字符串
-    if (Array.isArray(d[k].repos)) {
-      cfg[k].repos = d[k].repos
-    } else {
-      cfg[k].repos = legacyRepoToArray(d[k].repo, cfg[k].branch)
-    }
+    // 仅使用结构化 repos 数组（旧版 repo 字符串已废弃）
+    cfg[k].repos = Array.isArray(d[k].repos) ? d[k].repos : []
   }
   if (d.magicpush) Object.assign(cfg.magicpush, d.magicpush)
   cfg.notifyOnFirstCheck = !!d.notifyOnFirstCheck
   cfg.tz = d.tz || 'UTC+8'
   cfg.checkToken = d.checkToken || ''
-  // 记录掩码
+  // 记录敏感字段是否已配置（仅状态，不含值）
   for (const k of ['github', 'gitee', 'gitlab', 'cnb']) {
-    masked[k].token = d[k]?.token || ''
+    secrets[k].token = !!(sec?.[k]?.token)
   }
-  masked.checkToken = d.checkToken || ''
-  masked.magicpush.url = d.magicpush?.url || ''
-  masked.magicpush.token = d.magicpush?.token || ''
-}
-
-// 将旧版仓库字符串解析为 [{repo, branch, note}]
-function legacyRepoToArray(str, defaultBranch) {
-  if (!str) return []
-  const delim = str.includes('\n') ? '\n' : ','
-  return str.split(delim).map(s => s.trim()).filter(Boolean).map(s => {
-    const [repoPart, branch] = s.split('@')
-    const rp = repoPart.trim().split('/')
-    if (rp.length !== 2) return null
-    return { repo: repoPart.trim(), branch: branch ? branch.trim() : '', note: '' }
-  }).filter(Boolean)
+  secrets.checkToken = !!(sec?.checkToken)
+  secrets.magicpush.url = !!(sec?.magicpush?.url)
+  secrets.magicpush.token = !!(sec?.magicpush?.token)
 }
 
 async function save() {
@@ -299,7 +283,7 @@ async function save() {
     })
     const data = await res.json()
     if (!res.ok) { message.value = data.message; messageType.value = 'error'; return }
-    mergeConfig(data.data)
+    mergeConfig(data.data, data.secrets)
     message.value = '配置已保存'
     messageType.value = 'success'
   } catch (e) {

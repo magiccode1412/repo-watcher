@@ -20,24 +20,6 @@ export function parseGitLabRepoString(repoStr, defaultBranch) {
 }
 
 /**
- * 解析 GitLab 仓库列表字符串（支持逗号或换行分隔）
- * @param {string} repoStr 仓库列表字符串
- * @param {string} defaultBranch 默认分支
- * @returns {Array<{owner: string, repo: string, branch: string}>}
- */
-export function parseGitLabRepoList(repoStr, defaultBranch) {
-  if (!repoStr) return [];
-
-  const delimiter = repoStr.includes('\n') ? '\n' : ',';
-
-  return repoStr.split(delimiter)
-    .map(repo => repo.trim())
-    .filter(repo => repo)
-    .map(repo => parseGitLabRepoString(repo, defaultBranch))
-    .filter(repo => repo !== null);
-}
-
-/**
  * 检测单个 GitLab 仓库是否有更新
  * @param {{owner: string, repo: string, branch: string}} repoInfo 仓库信息
  * @param {Object} config 配置对象

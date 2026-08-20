@@ -22,7 +22,7 @@ export async function onRequestGet(context) {
     const repos = [];
 
     // 获取 GitHub 仓库列表
-    const githubRepos = normalizeRepos(config.github?.repos || config.github?.repo, config.github?.branch || 'main');
+    const githubRepos = normalizeRepos(config.github?.repos, config.github?.branch || 'main');
     for (const repo of githubRepos) {
       const repoKey = `${repo.owner}/${repo.repo}@${repo.branch}`;
       const repoUrl = `https://github.com/${repo.owner}/${repo.repo}`;
@@ -43,7 +43,7 @@ export async function onRequestGet(context) {
     }
 
     // 获取 Gitee 仓库列表
-    const giteeRepos = normalizeRepos(config.gitee?.repos || config.gitee?.repo, config.gitee?.branch || 'master');
+    const giteeRepos = normalizeRepos(config.gitee?.repos, config.gitee?.branch || 'master');
     for (const repo of giteeRepos) {
       const repoKey = `gitee:${repo.owner}/${repo.repo}@${repo.branch}`;
       const repoUrl = `https://gitee.com/${repo.owner}/${repo.repo}`;
@@ -67,7 +67,7 @@ export async function onRequestGet(context) {
 
     // 获取 GitLab 仓库列表
     const gitlabHost = config.gitlab?.host || 'gitlab.com';
-    const gitlabRepos = normalizeRepos(config.gitlab?.repos || config.gitlab?.repo, config.gitlab?.branch || 'main');
+    const gitlabRepos = normalizeRepos(config.gitlab?.repos, config.gitlab?.branch || 'main');
     for (const repo of gitlabRepos) {
       const repoKey = `gitlab:${repo.owner}/${repo.repo}@${repo.branch}`;
       const repoUrl = `https://${gitlabHost}/${repo.owner}/${repo.repo}`;
@@ -90,7 +90,7 @@ export async function onRequestGet(context) {
     }
 
     // 获取 CNB 仓库列表
-    const cnbRepos = normalizeRepos(config.cnb?.repos || config.cnb?.repo, config.cnb?.branch || 'main');
+    const cnbRepos = normalizeRepos(config.cnb?.repos, config.cnb?.branch || 'main');
     for (const repo of cnbRepos) {
       const repoKey = `cnb:${repo.owner}/${repo.repo}@${repo.branch}`;
       const repoUrl = `https://cnb.cool/${repo.owner}/${repo.repo}`;
