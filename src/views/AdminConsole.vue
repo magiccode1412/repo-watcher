@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-4xl mx-auto">
+  <div class="max-w-4xl mx-auto pt-8 px-4">
     <header class="flex items-center justify-between mb-8">
       <div class="flex items-center gap-4">
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">配置后台</h1>

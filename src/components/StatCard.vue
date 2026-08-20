@@ -1,5 +1,7 @@
 <template>
-  <div class="glass-card rounded-xl p-6">
+  <component :is="href ? 'a' : 'div'" :href="href || undefined"
+    class="glass-card rounded-xl p-6 block transition-colors hover:bg-white/80 dark:hover:bg-slate-800/80"
+    :class="href ? 'cursor-pointer' : ''">
     <div class="flex items-center justify-between">
       <div>
         <p class="text-slate-500 dark:text-slate-400 text-sm mb-1">{{ title }}</p>
@@ -9,7 +11,7 @@
         <slot name="icon" />
       </div>
     </div>
-  </div>
+  </component>
 </template>
 
 <script setup>
@@ -18,5 +20,6 @@ defineProps({
   value: { type: [String, Number], default: '-' },
   iconBg: { type: String, default: '' },
   iconColor: { type: String, default: '' },
+  href: { type: String, default: '' },
 })
 </script>

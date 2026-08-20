@@ -8,10 +8,6 @@
           <p class="text-slate-500 dark:text-slate-400">实时监控 GitHub、Gitee、GitLab 和 CNB 仓库状态</p>
         </div>
         <div class="flex items-center gap-4">
-          <RouterLink to="/admin"
-            class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors text-sm">
-            管理后台
-          </RouterLink>
           <span class="text-sm text-slate-400 dark:text-slate-500">{{ lastUpdate || '加载中...' }}</span>
           <button @click="loadData"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2">
@@ -22,6 +18,10 @@
             </svg>
             刷新
           </button>
+          <RouterLink to="/admin"
+            class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors text-sm">
+            管理后台
+          </RouterLink>
         </div>
       </div>
     </header>
@@ -37,22 +37,22 @@
           </svg>
         </template>
       </StatCard>
-      <StatCard title="GitHub" :value="data?.github ?? '-'" icon-bg="bg-gray-500/20" icon-color="text-black-400">
+      <StatCard title="GitHub" :value="data?.github ?? '-'" icon-bg="bg-gray-500/20" icon-color="text-black-400" href="#section-github">
         <template #icon>
           <BrandIcon platform="github" class="w-6 h-6" />
         </template>
       </StatCard>
-      <StatCard title="Gitee" :value="data?.gitee ?? 0" icon-bg="bg-red-500/20" icon-color="text-red-400">
+      <StatCard title="Gitee" :value="data?.gitee ?? 0" icon-bg="bg-red-500/20" icon-color="text-red-400" href="#section-gitee">
         <template #icon>
           <BrandIcon platform="gitee" class="w-6 h-6" />
         </template>
       </StatCard>
-      <StatCard title="GitLab" :value="data?.gitlab ?? 0" icon-bg="bg-orange-500/20" icon-color="text-orange-400">
+      <StatCard title="GitLab" :value="data?.gitlab ?? 0" icon-bg="bg-orange-500/20" icon-color="text-orange-400" href="#section-gitlab">
         <template #icon>
           <BrandIcon platform="gitlab" class="w-6 h-6" />
         </template>
       </StatCard>
-      <StatCard title="CNB" :value="data?.cnb ?? '-'" icon-bg="bg-orange-500/20" icon-color="text-orange-400">
+      <StatCard title="CNB" :value="data?.cnb ?? '-'" icon-bg="bg-orange-500/20" icon-color="text-orange-400" href="#section-cnb">
         <template #icon>
           <BrandIcon platform="cnb" class="w-6 h-6" />
         </template>
@@ -77,7 +77,7 @@
     </div>
 
     <!-- 仓库分区 -->
-    <section v-for="section in sections" :key="section.key" class="mb-8">
+    <section v-for="section in sections" :key="section.key" :id="`section-${section.key}`" class="mb-8 scroll-mt-4">
       <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
         <BrandIcon :platform="section.icon" class="w-5 h-5" />
         {{ section.title }}
