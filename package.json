@@ -31,6 +31,6 @@
     "vite-plugin-singlefile": "^2.3.3"
   },
   "overrides": {
-    "nanoid": "^5.1.6"
+    "nanoid": "^5.1.16"
   }
 }
