@@ -256,8 +256,10 @@ function mergeConfig(d) {
   for (const k of ['github', 'gitee', 'gitlab', 'cnb']) {
     if (!d[k]) continue
     Object.assign(cfg[k], d[k])
-    // 兼容旧版：若服务端仅有 repo 字符串，转换为 repos 数组
-    if (!Array.isArray(cfg[k].repos)) {
+    // 优先使用结构化 repos 数组；否则兼容旧版 repo 字符串
+    if (Array.isArray(d[k].repos)) {
+      cfg[k].repos = d[k].repos
+    } else {
       cfg[k].repos = legacyRepoToArray(d[k].repo, cfg[k].branch)
     }
   }
