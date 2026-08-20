@@ -13,7 +13,7 @@
  * 调用鉴权：config.checkToken（存于 KV，加密），通过环境变量 CHECK_TOKEN 兜底。
  */
 
-import { parseRepoString, parseRepoList, parseCnbRepoString, parseCnbRepoList } from '../lib/utils/index.js';
+import { parseRepoString, normalizeRepos } from '../lib/utils/index.js';
 import { checkRepoUpdate, checkGiteeRepoUpdate, parseGiteeRepoString, parseGiteeRepoList, checkGitLabRepoUpdate, parseGitLabRepoString, parseGitLabRepoList, checkCnbBuildUpdate, getRateLimitInfo, notify } from '../lib/services/index.js';
 import { getConfig } from '../lib/config.js';
 
@@ -33,7 +33,7 @@ async function performCheck(config, options = {}) {
         return { error: '仓库格式错误，正确格式：owner/repo 或 owner/repo@branch', status: 400 };
       }
     } else if (!targetRepo) {
-      const repos = parseRepoList(config.github?.repo, config.github?.branch || 'main');
+      const repos = normalizeRepos(config.github?.repos || config.github?.repo, config.github?.branch || 'main');
       for (const repo of repos) {
         results.push(await checkRepoUpdate(repo, config));
       }
@@ -42,7 +42,8 @@ async function performCheck(config, options = {}) {
 
   // Gitee 仓库检测
   if (platform === 'all' || platform === 'gitee') {
-    if (config.gitee?.repo) {
+    const giteeRepos = normalizeRepos(config.gitee?.repos || config.gitee?.repo, config.gitee?.branch || 'master');
+    if (giteeRepos.length) {
       if (targetRepo && platform === 'gitee') {
         const repoInfo = parseGiteeRepoString(targetRepo, config.gitee.branch || 'master');
         if (repoInfo) {
@@ -51,8 +52,7 @@ async function performCheck(config, options = {}) {
           return { error: 'Gitee 仓库格式错误', status: 400 };
         }
       } else if (!targetRepo) {
-        const repos = parseGiteeRepoList(config.gitee.repo, config.gitee.branch || 'master');
-        for (const repo of repos) {
+        for (const repo of giteeRepos) {
           results.push(await checkGiteeRepoUpdate(repo, config));
         }
       }
@@ -61,7 +61,8 @@ async function performCheck(config, options = {}) {
 
   // GitLab 仓库检测
   if (platform === 'all' || platform === 'gitlab') {
-    if (config.gitlab?.repo) {
+    const gitlabRepos = normalizeRepos(config.gitlab?.repos || config.gitlab?.repo, config.gitlab?.branch || 'main');
+    if (gitlabRepos.length) {
       if (targetRepo && platform === 'gitlab') {
         const repoInfo = parseGitLabRepoString(targetRepo, config.gitlab.branch || 'main');
         if (repoInfo) {
@@ -70,8 +71,7 @@ async function performCheck(config, options = {}) {
           return { error: 'GitLab 仓库格式错误', status: 400 };
         }
       } else if (!targetRepo) {
-        const repos = parseGitLabRepoList(config.gitlab.repo, config.gitlab.branch || 'main');
-        for (const repo of repos) {
+        for (const repo of gitlabRepos) {
           results.push(await checkGitLabRepoUpdate(repo, config));
         }
       }
@@ -80,7 +80,8 @@ async function performCheck(config, options = {}) {
 
   // CNB 仓库检测
   if (platform === 'all' || platform === 'cnb') {
-    if (config.cnb?.repo) {
+    const cnbRepos = normalizeRepos(config.cnb?.repos || config.cnb?.repo, config.cnb.branch || 'main');
+    if (cnbRepos.length) {
       if (targetRepo && platform === 'cnb') {
         const repoInfo = parseCnbRepoString(targetRepo, config.cnb.branch || 'main');
         if (repoInfo) {
@@ -89,8 +90,7 @@ async function performCheck(config, options = {}) {
           return { error: 'CNB 仓库格式错误', status: 400 };
         }
       } else if (!targetRepo) {
-        const repos = parseCnbRepoList(config.cnb.repo, config.cnb.branch || 'main');
-        for (const repo of repos) {
+        for (const repo of cnbRepos) {
           results.push(await checkCnbBuildUpdate(repo, config));
         }
       }

@@ -6,8 +6,7 @@
  * 配置来源：KV（repo_watcher_config，自动解密）
  */
 
-import { parseRepoList, parseCnbRepoList, getRepoData } from '../lib/utils/index.js';
-import { parseGiteeRepoList, parseGitLabRepoList } from '../lib/services/index.js';
+import { normalizeRepos, getRepoData } from '../lib/utils/index.js';
 import { getConfig } from '../lib/config.js';
 
 export async function onRequestGet(context) {
@@ -23,7 +22,7 @@ export async function onRequestGet(context) {
     const repos = [];
 
     // 获取 GitHub 仓库列表
-    const githubRepos = parseRepoList(config.github?.repo, config.github?.branch || 'main');
+    const githubRepos = normalizeRepos(config.github?.repos || config.github?.repo, config.github?.branch || 'main');
     for (const repo of githubRepos) {
       const repoKey = `${repo.owner}/${repo.repo}@${repo.branch}`;
       const repoUrl = `https://github.com/${repo.owner}/${repo.repo}`;
@@ -33,6 +32,7 @@ export async function onRequestGet(context) {
         platform: 'github',
         name: `${repo.owner}/${repo.repo}`,
         branch: repo.branch,
+        note: repo.note || null,
         key: repoKey,
         url: repoUrl,
         latestSha: repoData?.sha || null,
@@ -43,76 +43,73 @@ export async function onRequestGet(context) {
     }
 
     // 获取 Gitee 仓库列表
-    if (config.gitee?.repo) {
-      const giteeRepos = parseGiteeRepoList(config.gitee.repo, config.gitee.branch || 'master');
-      for (const repo of giteeRepos) {
-        const repoKey = `gitee:${repo.owner}/${repo.repo}@${repo.branch}`;
-        const repoUrl = `https://gitee.com/${repo.owner}/${repo.repo}`;
-        const repoData = await getRepoData(repoKey, 'gitee');
+    const giteeRepos = normalizeRepos(config.gitee?.repos || config.gitee?.repo, config.gitee?.branch || 'master');
+    for (const repo of giteeRepos) {
+      const repoKey = `gitee:${repo.owner}/${repo.repo}@${repo.branch}`;
+      const repoUrl = `https://gitee.com/${repo.owner}/${repo.repo}`;
+      const repoData = await getRepoData(repoKey, 'gitee');
 
-        repos.push({
-          platform: 'gitee',
-          name: `${repo.owner}/${repo.repo}`,
-          branch: repo.branch,
-          key: repoKey,
-          url: repoUrl,
-          latestSha: repoData?.sha || null,
-          latestDate: repoData?.date || null,
-          latestMessage: repoData?.message || null,
-          authorName: repoData?.author || null,
-          updatedAt: repoData?.updatedAt || null,
-          hasUpdate: false
-        });
-      }
+      repos.push({
+        platform: 'gitee',
+        name: `${repo.owner}/${repo.repo}`,
+        branch: repo.branch,
+        note: repo.note || null,
+        key: repoKey,
+        url: repoUrl,
+        latestSha: repoData?.sha || null,
+        latestDate: repoData?.date || null,
+        latestMessage: repoData?.message || null,
+        authorName: repoData?.author || null,
+        updatedAt: repoData?.updatedAt || null,
+        hasUpdate: false
+      });
     }
 
     // 获取 GitLab 仓库列表
-    if (config.gitlab?.repo) {
-      const gitlabHost = config.gitlab.host || 'gitlab.com';
-      const gitlabRepos = parseGitLabRepoList(config.gitlab.repo, config.gitlab.branch || 'main');
-      for (const repo of gitlabRepos) {
-        const repoKey = `gitlab:${repo.owner}/${repo.repo}@${repo.branch}`;
-        const repoUrl = `https://${gitlabHost}/${repo.owner}/${repo.repo}`;
-        const repoData = await getRepoData(repoKey, 'gitlab');
+    const gitlabHost = config.gitlab?.host || 'gitlab.com';
+    const gitlabRepos = normalizeRepos(config.gitlab?.repos || config.gitlab?.repo, config.gitlab?.branch || 'main');
+    for (const repo of gitlabRepos) {
+      const repoKey = `gitlab:${repo.owner}/${repo.repo}@${repo.branch}`;
+      const repoUrl = `https://${gitlabHost}/${repo.owner}/${repo.repo}`;
+      const repoData = await getRepoData(repoKey, 'gitlab');
 
-        repos.push({
-          platform: 'gitlab',
-          name: `${repo.owner}/${repo.repo}`,
-          branch: repo.branch,
-          key: repoKey,
-          url: repoUrl,
-          latestSha: repoData?.sha || null,
-          latestDate: repoData?.date || null,
-          latestMessage: repoData?.message || null,
-          authorName: repoData?.author || null,
-          updatedAt: repoData?.updatedAt || null,
-          hasUpdate: false
-        });
-      }
+      repos.push({
+        platform: 'gitlab',
+        name: `${repo.owner}/${repo.repo}`,
+        branch: repo.branch,
+        note: repo.note || null,
+        key: repoKey,
+        url: repoUrl,
+        latestSha: repoData?.sha || null,
+        latestDate: repoData?.date || null,
+        latestMessage: repoData?.message || null,
+        authorName: repoData?.author || null,
+        updatedAt: repoData?.updatedAt || null,
+        hasUpdate: false
+      });
     }
 
     // 获取 CNB 仓库列表
-    if (config.cnb?.repo) {
-      const cnbRepos = parseCnbRepoList(config.cnb.repo, config.cnb.branch || 'main');
-      for (const repo of cnbRepos) {
-        const repoKey = `cnb:${repo.owner}/${repo.repo}@${repo.branch}`;
-        const repoUrl = `https://cnb.cool/${repo.owner}/${repo.repo}`;
-        const repoData = await getRepoData(repoKey, 'cnb');
+    const cnbRepos = normalizeRepos(config.cnb?.repos || config.cnb?.repo, config.cnb?.branch || 'main');
+    for (const repo of cnbRepos) {
+      const repoKey = `cnb:${repo.owner}/${repo.repo}@${repo.branch}`;
+      const repoUrl = `https://cnb.cool/${repo.owner}/${repo.repo}`;
+      const repoData = await getRepoData(repoKey, 'cnb');
 
-        repos.push({
-          platform: 'cnb',
-          name: `${repo.owner}/${repo.repo}`,
-          branch: repo.branch,
-          key: repoKey,
-          url: repoUrl,
-          latestSha: repoData?.sha || null,
-          latestDate: repoData?.date || null,
-          latestMessage: repoData?.message || null,
-          authorName: repoData?.author || null,
-          updatedAt: repoData?.updatedAt || null,
-          hasUpdate: false
-        });
-      }
+      repos.push({
+        platform: 'cnb',
+        name: `${repo.owner}/${repo.repo}`,
+        branch: repo.branch,
+        note: repo.note || null,
+        key: repoKey,
+        url: repoUrl,
+        latestSha: repoData?.sha || null,
+        latestDate: repoData?.date || null,
+        latestMessage: repoData?.message || null,
+        authorName: repoData?.author || null,
+        updatedAt: repoData?.updatedAt || null,
+        hasUpdate: false
+      });
     }
 
     return new Response(JSON.stringify({

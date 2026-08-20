@@ -38,13 +38,11 @@
 
     <ConfigSection title="GitHub" icon="github" v-if="activeTab === 'github'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">仓库列表（逗号/换行分隔）</label>
-          <textarea v-model="cfg.github.repo" rows="2"
-            class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        <div class="md:col-span-2">
+          <RepoListEditor v-model="cfg.github.repos" :default-branch="cfg.github.branch" />
         </div>
         <div>
-          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">默认分支</label>
+          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">默认分支（行内为空时使用）</label>
           <input v-model="cfg.github.branch"
             class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
@@ -56,13 +54,11 @@
 
     <ConfigSection title="Gitee" icon="gitee" v-if="activeTab === 'gitee'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">仓库列表</label>
-          <textarea v-model="cfg.gitee.repo" rows="2"
-            class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        <div class="md:col-span-2">
+          <RepoListEditor v-model="cfg.gitee.repos" :default-branch="cfg.gitee.branch" />
         </div>
         <div>
-          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">默认分支</label>
+          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">默认分支（行内为空时使用）</label>
           <input v-model="cfg.gitee.branch"
             class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
@@ -74,13 +70,11 @@
 
     <ConfigSection title="GitLab" icon="gitlab" v-if="activeTab === 'gitlab'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">仓库列表</label>
-          <textarea v-model="cfg.gitlab.repo" rows="2"
-            class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        <div class="md:col-span-2">
+          <RepoListEditor v-model="cfg.gitlab.repos" :default-branch="cfg.gitlab.branch" />
         </div>
         <div>
-          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">默认分支</label>
+          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">默认分支（行内为空时使用）</label>
           <input v-model="cfg.gitlab.branch"
             class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
@@ -102,13 +96,11 @@
 
     <ConfigSection title="CNB" icon="cnb" v-if="activeTab === 'cnb'">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">仓库列表</label>
-          <textarea v-model="cfg.cnb.repo" rows="2"
-            class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        <div class="md:col-span-2">
+          <RepoListEditor v-model="cfg.cnb.repos" :default-branch="cfg.cnb.branch" />
         </div>
         <div>
-          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">默认分支</label>
+          <label class="block text-sm text-slate-500 dark:text-slate-400 mb-1">默认分支（行内为空时使用）</label>
           <input v-model="cfg.cnb.branch"
             class="w-full px-3 py-2 rounded-lg bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
@@ -185,6 +177,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import ConfigSection from '../components/ConfigSection.vue'
 import TokenField from '../components/TokenField.vue'
+import RepoListEditor from '../components/RepoListEditor.vue'
 import { useAdminAuth } from '../composables/useAdminAuth.js'
 import router from '../router'
 
@@ -202,10 +195,10 @@ const tabs = [
 const activeTab = ref('github')
 
 const cfg = reactive({
-  github: { repo: '', branch: 'main', token: '' },
-  gitee: { repo: '', branch: 'master', token: '' },
-  gitlab: { repo: '', branch: 'main', token: '', apiBase: 'https://gitlab.com', host: 'gitlab.com' },
-  cnb: { repo: '', branch: 'main', token: '', apiBase: 'https://api.cnb.cool' },
+  github: { repos: [], branch: 'main', token: '' },
+  gitee: { repos: [], branch: 'master', token: '' },
+  gitlab: { repos: [], branch: 'main', token: '', apiBase: 'https://gitlab.com', host: 'gitlab.com' },
+  cnb: { repos: [], branch: 'main', token: '', apiBase: 'https://api.cnb.cool' },
   notifyOnFirstCheck: false,
   tz: 'UTC+8',
   checkToken: '',
@@ -230,7 +223,15 @@ function clearEmpty(obj) {
   // 提交时不发送空 token（空表示不修改）
   const out = JSON.parse(JSON.stringify(obj))
   for (const k of ['github', 'gitee', 'gitlab', 'cnb']) {
-    if (out[k] && out[k].token === '') delete out[k].token
+    if (!out[k]) continue
+    if (out[k].token === '') delete out[k].token
+    // 仅保留仓库名非空的行，并丢弃旧版 repo 字符串字段
+    if (Array.isArray(out[k].repos)) {
+      out[k].repos = out[k].repos
+        .filter(r => r && (r.repo || '').trim())
+        .map(r => ({ repo: r.repo.trim(), branch: (r.branch || '').trim(), note: (r.note || '').trim() }))
+    }
+    delete out[k].repo
   }
   if (out.checkToken === '') delete out.checkToken
   if (out.magicpush?.url === '') delete out.magicpush.url
@@ -252,9 +253,15 @@ async function load() {
 
 function mergeConfig(d) {
   if (!d) return
-  for (const k of ['github', 'gitee', 'gitlab', 'cnb', 'magicpush']) {
-    if (d[k]) Object.assign(cfg[k], d[k])
+  for (const k of ['github', 'gitee', 'gitlab', 'cnb']) {
+    if (!d[k]) continue
+    Object.assign(cfg[k], d[k])
+    // 兼容旧版：若服务端仅有 repo 字符串，转换为 repos 数组
+    if (!Array.isArray(cfg[k].repos)) {
+      cfg[k].repos = legacyRepoToArray(d[k].repo, cfg[k].branch)
+    }
   }
+  if (d.magicpush) Object.assign(cfg.magicpush, d.magicpush)
   cfg.notifyOnFirstCheck = !!d.notifyOnFirstCheck
   cfg.tz = d.tz || 'UTC+8'
   cfg.checkToken = d.checkToken || ''
@@ -265,6 +272,18 @@ function mergeConfig(d) {
   masked.checkToken = d.checkToken || ''
   masked.magicpush.url = d.magicpush?.url || ''
   masked.magicpush.token = d.magicpush?.token || ''
+}
+
+// 将旧版仓库字符串解析为 [{repo, branch, note}]
+function legacyRepoToArray(str, defaultBranch) {
+  if (!str) return []
+  const delim = str.includes('\n') ? '\n' : ','
+  return str.split(delim).map(s => s.trim()).filter(Boolean).map(s => {
+    const [repoPart, branch] = s.split('@')
+    const rp = repoPart.trim().split('/')
+    if (rp.length !== 2) return null
+    return { repo: repoPart.trim(), branch: branch ? branch.trim() : '', note: '' }
+  }).filter(Boolean)
 }
 
 async function save() {
