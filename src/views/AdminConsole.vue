@@ -296,7 +296,6 @@ function mergeConfig(d, sec) {
 
 async function save() {
   saving.value = true
-  message.value = ''
   try {
     const res = await authFetch('/api/admin/config', {
       method: 'PUT',
@@ -315,7 +314,6 @@ async function save() {
 }
 
 async function testNotify() {
-  message.value = ''
   try {
     const res = await authFetch('/api/admin/test-notify', { method: 'POST' })
     const data = await res.json()
