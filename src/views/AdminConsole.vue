@@ -21,10 +21,24 @@
       </div>
     </header>
 
-    <p v-if="message" class="glass-card rounded-xl p-4 mb-4 text-sm"
-      :class="messageType === 'error' ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'">
-      {{ message }}
-    </p>
+    <!-- 右下角弹出通知 -->
+    <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 items-end pointer-events-none">
+      <transition-group name="toast">
+        <div v-for="t in toasts" :key="t.id"
+          class="glass-card pointer-events-auto rounded-xl px-4 py-3 shadow-lg text-sm max-w-xs flex items-start gap-2"
+          :class="t.type === 'error'
+            ? 'text-red-500 border border-red-400/40'
+            : 'text-emerald-600 dark:text-emerald-400 border border-emerald-400/40'">
+          <svg v-if="t.type !== 'error'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <svg v-else class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span class="break-words">{{ t.text }}</span>
+        </div>
+      </transition-group>
+    </div>
 
     <nav class="flex flex-wrap gap-2 mb-6">
       <button v-for="t in tabs" :key="t.key" @click="activeTab = t.key"
@@ -210,8 +224,17 @@ const secrets = reactive({
 })
 
 const saving = ref(false)
-const message = ref('')
-const messageType = ref('info')
+
+// 右下角弹出通知
+let toastSeq = 0
+const toasts = ref([])
+function showToast(text, type = 'success', duration = 3000) {
+  const id = ++toastSeq
+  toasts.value.push({ id, text, type })
+  setTimeout(() => {
+    toasts.value = toasts.value.filter(t => t.id !== id)
+  }, duration)
+}
 
 // 修改密码
 const oldPwd = ref('')
@@ -243,11 +266,10 @@ async function load() {
   try {
     const res = await authFetch('/api/admin/config')
     const data = await res.json()
-    if (!res.ok) { message.value = data.message; messageType.value = 'error'; return }
+    if (!res.ok) { showToast(data.message, 'error'); return }
     mergeConfig(data.data, data.secrets)
   } catch (e) {
-    message.value = e.message
-    messageType.value = 'error'
+    showToast(e.message, 'error')
   }
 }
 
@@ -282,13 +304,11 @@ async function save() {
       body: JSON.stringify(clearEmpty(cfg))
     })
     const data = await res.json()
-    if (!res.ok) { message.value = data.message; messageType.value = 'error'; return }
+    if (!res.ok) { showToast(data.message, 'error'); return }
     mergeConfig(data.data, data.secrets)
-    message.value = '配置已保存'
-    messageType.value = 'success'
+    showToast('配置已保存', 'success')
   } catch (e) {
-    message.value = e.message
-    messageType.value = 'error'
+    showToast(e.message, 'error')
   } finally {
     saving.value = false
   }
@@ -299,11 +319,9 @@ async function testNotify() {
   try {
     const res = await authFetch('/api/admin/test-notify', { method: 'POST' })
     const data = await res.json()
-    message.value = JSON.stringify(data.data)
-    messageType.value = 'success'
+    showToast('通知已发送：' + JSON.stringify(data.data), 'success')
   } catch (e) {
-    message.value = e.message
-    messageType.value = 'error'
+    showToast(e.message, 'error')
   }
 }
 
@@ -313,20 +331,16 @@ async function doLogout() {
 }
 
 async function changePassword() {
-  message.value = ''
   if (!oldPwd.value || !newPwd.value || !confirmPwd.value) {
-    message.value = '请填写完整'
-    messageType.value = 'error'
+    showToast('请填写完整', 'error')
     return
   }
   if (newPwd.value !== confirmPwd.value) {
-    message.value = '两次新密码不一致'
-    messageType.value = 'error'
+    showToast('两次新密码不一致', 'error')
     return
   }
   if (newPwd.value.length < 6) {
-    message.value = '新密码至少 6 位'
-    messageType.value = 'error'
+    showToast('新密码至少 6 位', 'error')
     return
   }
   savingPwd.value = true
@@ -337,15 +351,13 @@ async function changePassword() {
       body: JSON.stringify({ oldPassword: oldPwd.value, newPassword: newPwd.value })
     })
     const data = await res.json()
-    if (!res.ok) { message.value = data.message; messageType.value = 'error'; return }
-    message.value = data.message
-    messageType.value = 'success'
+    if (!res.ok) { showToast(data.message, 'error'); return }
+    showToast(data.message || '密码已修改', 'success')
     // 改密后所有会话已吊销，清除本地 token 并跳转重新登录
     await logout()
     router.push('/admin')
   } catch (e) {
-    message.value = e.message
-    messageType.value = 'error'
+    showToast(e.message, 'error')
   } finally {
     savingPwd.value = false
   }
@@ -353,3 +365,19 @@ async function changePassword() {
 
 onMounted(load)
 </script>
+
+<style scoped>
+/* 右下角通知弹出/消失动画 */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+.toast-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(12px);
+}
+</style>

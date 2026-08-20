@@ -9,9 +9,10 @@
         </div>
         <div class="flex items-center gap-4">
           <span class="text-sm text-slate-400 dark:text-slate-500">{{ lastUpdate || '加载中...' }}</span>
-          <button @click="loadData"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="onRefresh"
+            class="h-9 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-2"
+            :disabled="refreshing">
+            <svg class="w-4 h-4 transition-transform" :class="{ 'refresh-spin': refreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
               </path>
@@ -19,7 +20,7 @@
             刷新
           </button>
           <RouterLink to="/admin"
-            class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors text-sm">
+            class="h-9 px-4 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors text-sm flex items-center">
             管理后台
           </RouterLink>
         </div>
@@ -118,6 +119,17 @@ import { useRepos } from '../composables/useRepos.js'
 
 const { data, error, lastUpdate, loadData } = useRepos()
 
+const refreshing = ref(false)
+
+function onRefresh() {
+  if (refreshing.value) return
+  refreshing.value = true
+  loadData()
+  setTimeout(() => {
+    refreshing.value = false
+  }, 2000)
+}
+
 const currentYear = new Date().getFullYear()
 
 // 与原版保持一致的分区顺序：GitHub、CNB、Gitee、GitLab
@@ -141,3 +153,19 @@ function sortedRepos(platform) {
 
 onMounted(loadData)
 </script>
+
+<style scoped>
+/* 刷新按钮图标旋转动画：每次旋转 2s */
+.refresh-spin {
+  animation: refresh-spin 2s linear infinite;
+}
+
+@keyframes refresh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
