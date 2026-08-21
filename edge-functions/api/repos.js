@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
   };
 
   try {
-    const config = await getConfig();
+    const config = await getConfig(context.env);
     const repos = [];
 
     // 获取 GitHub 仓库列表
